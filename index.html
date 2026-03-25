@@ -209,7 +209,7 @@
             min-height: 420px;
             background:
                 linear-gradient(to right, rgba(0,0,0,0.88) 45%, rgba(0,0,0,0.4) 100%),
-                url('https://images.unsplash.com/photo-1614680376573-df3480f0c6ff?ixlib=rb-4.0.3&q=85&fm=jpg&crop=entropy&cs=srgb') center/cover no-repeat;
+                url('https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSuIMvzx7VbXt51xKQ5Ix9RdkizTjWz5XYN4A&s') center/cover no-repeat;
             display: flex;
             align-items: center;
             padding: 60px 60px;
@@ -969,43 +969,68 @@
 
 <script>
 // ═══════════════════════════════════════
-//  DATA
+//  DATA  (your songs)
 // ═══════════════════════════════════════
 const songs = [
-    { id:1, title:"Whatever It Takes", artist:"Imagine Dragons", img:"https://picsum.photos/id/1015/300/300", duration:"3:26" },
-    { id:2, title:"Skyfall",           artist:"Adele",            img:"https://picsum.photos/id/201/300/300",  duration:"4:47" },
-    { id:3, title:"Superman",          artist:"Eminem",           img:"https://picsum.photos/id/237/300/300",  duration:"5:50" },
-    { id:4, title:"Softcore",          artist:"The Neighbourhood",img:"https://picsum.photos/id/29/300/300",   duration:"3:26" },
-    { id:5, title:"The Lonliest",      artist:"Måneskin",         img:"https://picsum.photos/id/160/300/300",  duration:"3:55" },
-    { id:6, title:"Time",              artist:"Luciano",          img:"https://picsum.photos/id/1016/300/300", duration:"3:20" },
-    { id:7, title:"112",               artist:"Jazzek",           img:"https://picsum.photos/id/1025/300/300", duration:"2:50" },
-    { id:8, title:"We Don't Care",     artist:"Kyanu & DJ Gullum",img:"https://picsum.photos/id/355/300/300",  duration:"3:10" },
-    { id:9, title:"Who I Am",          artist:"Alan Walker & Elias",img:"https://picsum.photos/id/398/300/300",duration:"2:58" },
-    { id:10,title:"Baixo",             artist:"XXAnteria",        img:"https://picsum.photos/id/453/300/300",  duration:"2:40" },
+    { id:1,  title:"Aari Aari",  artist:"Dhurandhar The Revenge",img:"https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTbGp4Z-5N_jeiUvIrzXJC_VBJnICjcxPePFZfdCyF-YFo989caoqa3edjH8oGY86sjJEIiXg&s=10", duration:"3:30", audio:"My_Favorite_Songs/Aari Aari (Audio)： Dhurandhar The Revenge Shashwat S,Bombay R,Khan,Jasmine,Sudhir,Irshad,Reble,Token.mp3" },
+    { id:2,  title:"FAASLE", artist:"Aditya Rikhari",img:"https://i.scdn.co/image/ab67616d0000b273f20ec84c83625511df6a4af5",     duration:"3:36", audio:"My_Favorite_Songs/Aditya Rikhari - FAASLE.mp3" },
+    { id:3,  title:"Akeli Laila",  artist:"Baaghi 4",img:"https://i.ytimg.com/vi/9PF2aEZMq58/hq720.jpg",    duration:"2:40", audio:"My_Favorite_Songs/Baaghi 4： Akeli Laila (Song) ｜ Tiger S,Sonam B,Sanjay D ｜ Payal,Aditya,Paradox ｜ Sajid N,A. Harsha.mp3" },
+    { id:4,  title:"Bairan", artist:"Banjaare",img:"https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQLVR7M54KH_BOEmGCuDSQ3inVyQ6jm7gbSNg&s", duration:"2:30", audio:"My_Favorite_Songs/Bairan – Animated Love Story ｜ Banjaare (Official Video).mp3" },
+    { id:5,  title:"Bairi", artist:"Virat, Miss Parul",img:"https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSJHz3PyiFwYkNdqJhiv-kCTdfeZchcSucU7A&s",  duration:"3:14", audio:"My_Favorite_Songs/Bairi (Official Video) Virat, Miss Parul ｜ Pradeep Solanki, Heena ｜ New Rajasthani Song 2026.mp3" },
+    { id:6,  title:"Darkside x Aaja Sanam", artist:"Lata Mangeshkar & Neoni", img:"https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTmmdtKseJhQYUXzRHpdijWsmzOy8g6-b13_A&s", duration:"3:05", audio:"My_Favorite_Songs/Darkside x Aaja Sanam Madhur Chandni Mein Hum ： MTVR Mashup ｜ Lata Mangeshkar x Neoni ｜ Full Version.mp3" },
+    { id:7,  title:"Dhaaga", artist:"Nilotpal Bora",img:"https://c.saavncdn.com/592/Aspirants-Season-1-Music-From-the-TVF-Original-Series--English-2021-20210505184143-500x500.jpg",   duration:"3:46", audio:"My_Favorite_Songs/Dhaaga - Official Music Video ｜ TVF's Aspirants ｜ Nilotpal Bora ｜ Hussain Haidry.mp3" },
+    { id:8,  title:"Dhurandhar - Title Track", artist:"Shashwat Sachdev, Hanumankind",img:"https://i.ytimg.com/vi/7IBDa53IsvI/maxresdefault.jpg", duration:"2:58", audio:"My_Favorite_Songs/Dhurandhar - Title Track ｜ Ranveer Singh, Shashwat Sachdev, Hanumankind, Jasmine Sandlas,Aditya Dhar.mp3" },
+    { id:9,  title:"Finding Her",  artist:"Bharath, Kushagra & Saaheal",  img:"https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSzQSdmocbKdY0pjC6SOXkM4B97OzevFLV34A&s",         duration:"3:27", audio:"My_Favorite_Songs/Finding Her.mp3" },
+    { id:10, title:"Raanjhan",  artist:"Parampara Tandon",img:"https://c.saavncdn.com/436/Do-Patti-Hindi-2024-20250509181115-500x500.jpg",           duration:"3:27", audio:"My_Favorite_Songs/Full Video： Raanjhan.mp3" },
+    { id:11, title:"Ganga Ke Kinare",   artist:"Bunny Sagar", img:"https://www.sahaayataa.in/shi_asset/imgs/gallery/mci-image5219-1773505522.jpg",  duration:"3:27", audio:"My_Favorite_Songs/Ganga Ke Kinare.mp3" },
+    { id:12, title:"Gehra Hua",     artist:"Arijit Singh",img:"https://static.toiimg.com/thumb/resizemode-4,width-1280,height-720,msid-125652384/125652384.jpg", duration:"3:51", audio:"My_Favorite_Songs/Gehra Hua.mp3" },
+    { id:13, title:"Haan Ke Haan",  artist:"Zendria", img:"https://pbs.twimg.com/media/GK4zg0TbQAAQps7.jpg", duration:"2:21", audio:"My_Favorite_Songs/Haan Ke Haan.mp3" },
+    { id:14, title:"Jalwa",   artist:"Carryminati",img:"https://media.telanganatoday.com/wp-content/uploads/2023/08/jalwa.jpg", duration:"3:29", audio:"My_Favorite_Songs/JALWA - CARRYMINATI X WILY FRENZY.mp3" },
+    { id:15, title:"Unse Jaake Kehdo",   artist:"Justh",  img:"https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSp5yWEANwhE7Mw1VUUS8xLe9Y66RL9CaYsiw&s", duration:"3:02", audio:"My_Favorite_Songs/Justh - Unse Jaake Kehdo (Official Music Video).mp3" },
+    { id:16, title:"Laal Pari",  artist:"Yo Yo Honey Singh",  img:"https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSPhDnXmCyMzDtn9zXcgThtTDI7b9nNqObPQg&s",   duration:"3:04", audio:"My_Favorite_Songs/LAAL PARI (Song)： Yo Yo Honey Singh ｜ Sajid Nadiadwala ｜ Tarun Mansukhani ｜ Housefull 5.mp3" },
+    { id:17, title:"Madhurashtakam", artist:"Zendria",  img:"https://pbs.twimg.com/media/GK4zg0TbQAAQps7.jpg",   duration:"5:01", audio:"My_Favorite_Songs/MADHURASHTAKAM.mp3" },
+    { id:18, title:"Main Bola Hey", artist:"Karthik Rao", img:"https://i.ytimg.com/vi/sw4y6iZtXE0/sddefault.jpg",  duration:"2:50", audio:"My_Favorite_Songs/Main Bola Hey!.mp3" },
+    { id:19, title:"Main Tumhara",artist:"A.R. Rahman, Jonita Gandhi", img:"https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTVh2Z0bqd1b89IhUqB40WjMSG-Etuq2ux8Dw&s",duration:"2:46", audio:"My_Favorite_Songs/Main Tumhara.mp3" },
+    { id:20, title:"Naam Chale",artist:"Vikram Sarkar", img:"https://c.saavncdn.com/335/Naam-Chale-Unknown-2025-20250624213158-500x500.jpg",  duration:"2:29", audio:"My_Favorite_Songs/Naam Chale.mp3" },
+    { id:21, title:"O Re Manwa",artist:"Meghna Mishra", img:"https://c.saavncdn.com/307/Secret-Superstar-Hindi-2017-20171018063603-500x500.jpg",    duration:"3:40", audio:"My_Favorite_Songs/O Re Manwa.mp3" },
+    { id:22, title:"Om Namo Bhagavate Vasudevaya", artist:"Vijay Prakash, Sanjith Hegde",  img:"https://c.saavncdn.com/559/Om-Namo-Bhagavate-Vasudevaya-Sanskrit-2022-20220809121217-500x500.jpg",     duration:"2:46", audio:"My_Favorite_Songs/Om Namo Bhagavate Vasudevaya.mp3" },
+    { id:23, title:"Paisa",artist:"Mellow-D, Sachin-Jigar, Vishal Dadlani", img:"https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRczL2S3BN9st8AcGA1rQRfWO4wwzOvpu9uWA&s",  duration:"3:06", audio:"My_Favorite_Songs/Paisa.mp3" },
+    { id:24, title:"Radha Rani Lage", artist:"Zendria", img:"https://pbs.twimg.com/media/GK4zg0TbQAAQps7.jpg",  duration:"3:22", audio:"My_Favorite_Songs/Radha Rani Lage.mp3" },
+    { id:25, title:"Shararat", artist:"Jasmine Sandlas, Shashwat Sachdev", img:"https://static.toiimg.com/thumb/msid-127842599,imgsize-90132,width-400,resizemode-4/127842599.jpg", duration:"3:49", audio:"My_Favorite_Songs/Shararat.mp3" },
+    { id:26, title:"Sunehra",artist:"Jai dhir",img:"https://i.ytimg.com/vi/-GZ-eEozdIg/maxresdefault.jpg",  duration:"3:27", audio:"My_Favorite_Songs/Sunehra.mp3" },
+    { id:27, title:"Badli Si Hawa Hai", artist:"Arijit Singh", img:"https://d3pc1xvrcw35tl.cloudfront.net/ln/feedImages/400x300/ANI-20250823120533_202508.jpg",   duration:"2:47", audio:"My_Favorite_Songs/Badli Si Hawa Hai (Song).mp3" },
+    { id:28, title:"Theme Song – Scam 1992",artist:"Achint",     img:"https://c.saavncdn.com/415/Scam-1992-Theme-Original-Mix-English-2020-20201230214802-500x500.jpg",  duration:"2:58", audio:"My_Favorite_Songs/THEME SONG.mp3" },
+    { id:29, title:"Shree Raghuvar Komal Nayan",artist:"Zendria",   img:"https://pbs.twimg.com/media/GK4zg0TbQAAQps7.jpg",    duration:"3:33", audio:"My_Favorite_Songs/श्री रघुवर कोमल कमल नयन को पहनाओ जयमाला.mp3" },
+    { id:30, title:"Shree Ram Stuti",artist:"Kids Performance", img:"https://i.pinimg.com/736x/f2/d6/ed/f2d6ed0bbcb173056a68d14fa18c6fcf.jpg",  duration:"3:08", audio:"My_Favorite_Songs/श्री राम स्तुति： ＂श्री राम चंद्र कृपालु भजमन.mp3" },
+    { id:31, title:"Dooron Dooron",artist:"Meghdeep Bose, Paresh Pahuja", img:"https://i.scdn.co/image/ab67616d00001e02ca38512149238c1b4c11b4ae",      duration:"4:05", audio:"My_Favorite_Songs/Dooron Dooron (Official Video).mp3" },
+    { id:32, title:"Matkar Maya Ko Ahankar",artist:"Kabir Café",img:"https://images.genius.com/c9089267cb91d72df34768e3e9e57ac6.1000x1000x1.jpg",      duration:"6:05", audio:"My_Favorite_Songs/Matkar Maya Ko Ahankar.mp3" },
+    { id:33, title:"Tenu Sang Rakhna",artist:"Achint, Arijit Singh, Anumita Nadesan",img:"https://images.genius.com/57cf723bbe4e4e75d47c363b21c303ee.1000x1000x1.png",  duration:"3:02", audio:"My_Favorite_Songs/Tenu Sang Rakhna - Jigra.mp3" },
+    { id:34, title:"Sahiba", artist:"Stebin Ben, Jasleen Royal", img:"https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTcjpgK_3YExSHrYo8OhyY3kF2NxgsWFLaaEw&s",    duration:"3:37", audio:"My_Favorite_Songs/Sahiba.mp3" },
+    { id:35, title:"Rasputin",artist:"Boney M", img:"https://images.genius.com/705db109f7e937588b29b689f2e1937e.1000x1000x1.png",     duration:"3:40", audio:"My_Favorite_Songs/Boney M - Rasputin (Lyrics).mp3" },
+    { id:36, title:"Shape of You", artist:"Ed Sheeran",img:"https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSbGbUXRuyR2MJWFN0nNg5-uP08pkaihgitcQ&s",    duration:"4:23", audio:"My_Favorite_Songs/Ed Sheeran - Shape of You (Official Music Video).mp3" },
+    { id:37, title:"O Ri Chiraiya",artist:"Swanand Kirkire", img:"https://i1.sndcdn.com/artworks-000169935770-ko6ckk-t500x500.jpg",  duration:"4:33", audio:"My_Favorite_Songs/O Ri Chiraiya(Lyrical)：Yaariyan 2.mp3" },
 ];
 
-const weeklyIds     = [1,2,3,4,5];
-const newReleaseIds = [6,7,8,9,10];
+const weeklyIds     = [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20];
+const newReleaseIds = [21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37];
 const trendingList  = [
-    { id:4,  rank:1, date:"Nov 4, 2023",  album:"Hard to Imagine the Neighbourhood Ever Changing" },
-    { id:2,  rank:2, date:"Oct 26, 2023", album:"nightmares" },
-    { id:5,  rank:3, date:"Dec 29, 2023", album:"RUSH!" },
-    { id:3,  rank:4, date:"Dec 30, 2023", album:"Lovin On Me" },
-    { id:1,  rank:5, date:"Dec 29, 2023", album:"Evolve" },
-    { id:6,  rank:6, date:"May 27, 2023", album:"Dance The Night (From Barbie Movie)" },
-    { id:10, rank:7, date:"Dec 10, 2023", album:"Water" },
+    { id:8,  rank:1, date:"2025", album:"Dhurandhar" },
+    { id:14, rank:2, date:"2023", album:"Jalwa" },
+    { id:36, rank:3, date:"2017", album:"Shape of You" },
+    { id:12, rank:4, date:"2025", album:"Gehra Hua" },
+    { id:25, rank:5, date:"2025", album:"Dhurandhar" },
+    { id:35, rank:6, date:"1978", album:"Nightflight to Venus" },
+    { id:33, rank:7, date:"2024", album:"Jigra" },
 ];
 
 // ═══════════════════════════════════════
 //  STATE
 // ═══════════════════════════════════════
-let currentIndex  = 0;
-let isPlaying     = false;
-let isShuffle     = false;
-let isLoop        = false;
-let progressPct   = 0;
-let progressTimer = null;
-const liked       = new Set();
+let currentIndex = 0;
+let isPlaying    = false;
+let isShuffle    = false;
+let isLoop       = false;
+const liked      = new Set();
 
 // ═══════════════════════════════════════
 //  RENDER CARDS
@@ -1058,17 +1083,19 @@ document.getElementById('new-release-cards').append(...newReleaseIds.map(id => m
 document.getElementById('trending-body').append(    ...trendingList.map(makeRow));
 
 // ═══════════════════════════════════════
-//  PLAYER LOGIC
+//  PLAYER LOGIC — Real Audio Engine
 // ═══════════════════════════════════════
-const player       = document.getElementById('mini-player');
-const playerImg    = document.getElementById('player-img');
-const playerTitle  = document.getElementById('player-title');
-const playerArtist = document.getElementById('player-artist');
-const playerHeart  = document.getElementById('player-heart');
-const playPauseBtn = document.getElementById('play-pause-btn');
-const progressFill = document.getElementById('progress-fill');
-const currentTimeEl= document.getElementById('current-time');
-const totalTimeEl  = document.getElementById('total-time');
+const player        = document.getElementById('mini-player');
+const playerImg     = document.getElementById('player-img');
+const playerTitle   = document.getElementById('player-title');
+const playerArtist  = document.getElementById('player-artist');
+const playerHeart   = document.getElementById('player-heart');
+const progressFill  = document.getElementById('progress-fill');
+const currentTimeEl = document.getElementById('current-time');
+const totalTimeEl   = document.getElementById('total-time');
+
+const audio = new Audio();
+audio.volume = 0.8;
 
 function playSongById(id) {
     const idx = songs.findIndex(s => s.id === id);
@@ -1080,46 +1107,30 @@ function playSongById(id) {
 
 function loadSong() {
     const s = songs[currentIndex];
-    playerImg.src    = s.img;
+    audio.src = s.audio || '';
+    playerImg.src            = s.img;
     playerTitle.textContent  = s.title;
     playerArtist.textContent = s.artist;
-    totalTimeEl.textContent  = s.duration;
-    progressPct = 0;
-    progressFill.style.width = '0%';
+    progressFill.style.width  = '0%';
     currentTimeEl.textContent = '0:00';
-
-    // update heart
+    totalTimeEl.textContent   = s.duration;
+    player.classList.add('visible');
     playerHeart.classList.toggle('liked', liked.has(s.id));
-
-    // highlight trending row
     document.querySelectorAll('#trending-body tr').forEach(tr => {
         tr.classList.toggle('playing', parseInt(tr.dataset.id) === s.id);
     });
-
-    player.classList.add('visible');
 }
 
 function startPlay() {
     isPlaying = true;
-    playPauseBtn.innerHTML = '<i class="fas fa-pause"></i>';
-    clearInterval(progressTimer);
-    progressTimer = setInterval(() => {
-        progressPct += 0.28;
-        if (progressPct >= 100) { progressPct = 0; playNext(); return; }
-        progressFill.style.width = progressPct + '%';
-        // fake time
-        const s = songs[currentIndex];
-        const parts = s.duration.split(':');
-        const total = parseInt(parts[0]) * 60 + parseInt(parts[1]);
-        const elapsed = Math.floor((progressPct / 100) * total);
-        currentTimeEl.textContent = `${Math.floor(elapsed/60)}:${String(elapsed%60).padStart(2,'0')}`;
-    }, 100);
+    document.getElementById('play-pause-btn').innerHTML = '<i class="fas fa-pause"></i>';
+    audio.play().catch(() => {});
 }
 
 function stopPlay() {
     isPlaying = false;
-    playPauseBtn.innerHTML = '<i class="fas fa-play"></i>';
-    clearInterval(progressTimer);
+    document.getElementById('play-pause-btn').innerHTML = '<i class="fas fa-play"></i>';
+    audio.pause();
 }
 
 function togglePlay() {
@@ -1131,47 +1142,98 @@ function playNext() {
     currentIndex = isShuffle
         ? Math.floor(Math.random() * songs.length)
         : (currentIndex + 1) % songs.length;
-    loadSong(); startPlay();
+    loadSong();
+    startPlay();
 }
 
 function playPrev() {
     stopPlay();
-    if (progressPct > 15) { progressPct = 0; loadSong(); startPlay(); return; }
+    if (audio.currentTime > 3) { audio.currentTime = 0; startPlay(); return; }
     currentIndex = (currentIndex - 1 + songs.length) % songs.length;
-    loadSong(); startPlay();
+    loadSong();
+    startPlay();
 }
 
-// Controls
-playPauseBtn.addEventListener('click', togglePlay);
-document.getElementById('next-btn').addEventListener('click', playNext);
-document.getElementById('prev-btn').addEventListener('click', playPrev);
-
-document.getElementById('shuffle-btn').addEventListener('click', function() {
-    isShuffle = !isShuffle;
-    this.style.color = isShuffle ? 'var(--accent-pink)' : '';
-});
-document.getElementById('loop-btn').addEventListener('click', function() {
-    isLoop = !isLoop;
-    this.style.color = isLoop ? 'var(--accent-pink)' : '';
+// Auto-advance when song ends
+audio.addEventListener('ended', () => {
+    if (isLoop) { audio.currentTime = 0; audio.play(); return; }
+    playNext();
 });
 
+// Live progress + timestamps
+audio.addEventListener('timeupdate', () => {
+    if (!audio.duration) return;
+    const pct = (audio.currentTime / audio.duration) * 100;
+    progressFill.style.width = pct + '%';
+    const m = Math.floor(audio.currentTime / 60);
+    const s = Math.floor(audio.currentTime % 60);
+    currentTimeEl.textContent = `${m}:${s.toString().padStart(2, '0')}`;
+    const tm = Math.floor(audio.duration / 60);
+    const ts = Math.floor(audio.duration % 60);
+    totalTimeEl.textContent = `${tm}:${ts.toString().padStart(2, '0')}`;
+});
+
+// Seek on progress bar click
 document.getElementById('progress-bar').addEventListener('click', e => {
+    if (!audio.duration) return;
     const rect = e.currentTarget.getBoundingClientRect();
-    progressPct = ((e.clientX - rect.left) / rect.width) * 100;
-    progressFill.style.width = progressPct + '%';
+    audio.currentTime = ((e.clientX - rect.left) / rect.width) * audio.duration;
 });
 
-// Like on player bar
+// ═══════════════════════════════════════
+//  CONTROLS — robust binding
+// ═══════════════════════════════════════
+
+// Play / Pause — re-query so we always get the live element
+document.getElementById('play-pause-btn').addEventListener('click', function(e) {
+    e.stopPropagation();
+    togglePlay();
+});
+
+document.getElementById('next-btn').addEventListener('click', function(e) {
+    e.stopPropagation();
+    playNext();
+});
+
+document.getElementById('prev-btn').addEventListener('click', function(e) {
+    e.stopPropagation();
+    playPrev();
+});
+
+document.getElementById('shuffle-btn').addEventListener('click', function(e) {
+    e.stopPropagation();
+    isShuffle = !isShuffle;
+    // colour the button itself AND the icon inside it
+    this.style.color = isShuffle ? 'var(--accent-pink)' : 'var(--text-light)';
+    if (this.querySelector('i')) this.querySelector('i').style.color = this.style.color;
+});
+
+document.getElementById('loop-btn').addEventListener('click', function(e) {
+    e.stopPropagation();
+    isLoop = !isLoop;
+    this.style.color = isLoop ? 'var(--accent-pink)' : 'var(--text-light)';
+    if (this.querySelector('i')) this.querySelector('i').style.color = this.style.color;
+});
+
+// Volume
+document.getElementById('volume-slider').addEventListener('input', e => {
+    audio.volume = e.target.value / 100;
+    const icon = document.querySelector('.player-right i');
+    if (icon) icon.className = audio.volume === 0 ? 'fas fa-volume-mute'
+                             : audio.volume < 0.5  ? 'fas fa-volume-down'
+                                                   : 'fas fa-volume-up';
+});
+
+// Like — player bar
 playerHeart.addEventListener('click', () => {
     const id = songs[currentIndex].id;
     if (liked.has(id)) { liked.delete(id); playerHeart.classList.remove('liked'); }
     else               { liked.add(id);    playerHeart.classList.add('liked');    }
-    // sync in trending table
-    const tableHeart = document.querySelector(`#trending-body .heart-btn[data-id="${id}"]`);
-    if (tableHeart) tableHeart.classList.toggle('liked', liked.has(id));
+    const th = document.querySelector(`#trending-body .heart-btn[data-id="${id}"]`);
+    if (th) th.classList.toggle('liked', liked.has(id));
 });
 
-// Like in table
+// Like — trending table
 document.getElementById('trending-body').addEventListener('click', e => {
     const btn = e.target.closest('.heart-btn');
     if (!btn) return;
@@ -1271,14 +1333,7 @@ document.querySelectorAll('.menu-item').forEach(item => {
     });
 });
 
-// Volume
-document.getElementById('volume-slider').addEventListener('input', e => {
-    const vol = e.target.value / 100;
-    document.querySelector('.player-right .fa-volume-up').className =
-        vol === 0 ? 'fas fa-volume-mute' : vol < 0.5 ? 'fas fa-volume-down' : 'fas fa-volume-up';
-});
-
-console.log('✅ Melodies — design fixed and loaded.');
+console.log('✅ Melodies — real audio engine loaded.');
 </script>
 </body>
 </html>
