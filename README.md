@@ -51,7 +51,7 @@ A fully responsive, feature-rich personal music player built with pure **HTML, C
 ```
 melodies/
 │
-├── melodies_fixed.html        # Main application (single file)
+├── index.html        # Main application (single file)
 │
 └── My_Favorite_Songs/         # Your MP3 files go here
     ├── Aari Aari (...).mp3
@@ -70,7 +70,7 @@ No build step, no server required for most browsers.
 
 **Option 1 — Direct open (simplest)**
 ```
-Double-click melodies_fixed.html
+Double-click index.html
 ```
 > Note: Some browsers block local audio loading via `file://`. If songs don't play, use Option 2.
 
@@ -82,7 +82,7 @@ Using Python:
 python -m http.server 8080
 
 # Then open:
-http://localhost:8080/melodies_fixed.html
+http://localhost:8080/index.html
 ```
 
 Using Node.js:
