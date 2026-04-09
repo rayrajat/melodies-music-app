@@ -92,6 +92,9 @@ npx serve .
 
 Using VS Code — install the **Live Server** extension, right-click `melodies_fixed.html` → *Open with Live Server*.
 
+**Option 3 — Directly go to website (Easy)**
+https://melodies-mauve.vercel.app/
+
 ---
 
 ## 🎵 Song List
