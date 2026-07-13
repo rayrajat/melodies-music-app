@@ -484,7 +484,7 @@
             cursor: pointer;
             flex-shrink: 0;
             transition: all 0.2s;
-            margin-left: 4px;
+            margin-left: 8px;
         }
         #player-heart:hover { color: var(--accent-pink); transform: scale(1.2); }
         #player-heart.liked { color: var(--accent-pink); }
@@ -494,12 +494,12 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 8px;
+            gap: 2px;
         }
         .control-buttons {
             display: flex;
             align-items: center;
-            gap: 20px;
+            gap: 10px;
         }
         .control-buttons button {
             background: none;
@@ -532,7 +532,7 @@
             max-width: 440px;
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 12px;
             font-size: 11px;
             color: var(--text-light);
         }
@@ -643,7 +643,9 @@
             /* Hide nav-links (already hidden at 900px) */
             .nav-links { display: none; }
             /* Hide Login btn — keep only Sign Up */
-            .auth-buttons .login-btn { display: none; }
+            /*.auth-buttons .login-btn { display: none; }*/
+            .auth-buttons .login-btn { padding: 7px 14px; font-size: 12px; }
+            
             /* Shrink Sign Up button */
             .auth-buttons .signup-btn { padding: 7px 14px; font-size: 12px; }
             /* Search takes remaining space */
@@ -659,7 +661,7 @@
                 padding: 24px 16px;
                 background:
                     linear-gradient(rgba(0,0,0,0.85), rgba(0,0,0,0.9)),
-                    url('https://images.unsplash.com/photo-1614680376573-df3480f0c6ff?ixlib=rb-4.0.3&q=85&fm=jpg&crop=entropy&cs=srgb') center/cover no-repeat;
+                    url('https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSuIMvzx7VbXt51xKQ5Ix9RdkizTjWz5XYN4A&s') center/cover no-repeat;
                 align-items: flex-start;
             }
             .hero-content h1 { font-size: 26px; letter-spacing: -0.5px; margin-bottom: 10px; }
@@ -711,38 +713,75 @@
             .trending-table td:last-child { margin-left: auto; flex-shrink: 0; }
 
             /* ── Mini Player: 2-row stacked ── */
-            #mini-player {
-                flex-direction: column;
-                padding: 8px 14px 10px;
-                gap: 5px;
-                height: auto;           /* fluid — no fixed height */
-                min-height: 110px;
-                max-height: 130px;
-                justify-content: center;
-                align-items: stretch;
-            }
-            body { grid-template-rows: 1fr auto; } /* let player height be content-driven */
+            @media (max-width: 600px) {
+  #mini-player {
+    flex-direction: row;        /* horizontal layout */
+    align-items: center;
+    justify-content: space-between;
+    padding: 6px 10px;
+    height: 70px;
+    min-height: 70px;
+    max-height: 70px;
+    gap: 8px;
+  }
 
-            /* Row 1: track info */
-            .now-playing {
-                width: 100%;
-                gap: 10px;
-                min-width: 0;
-            }
-            .now-playing img   { width: 36px; height: 36px; border-radius: 6px; }
-            .now-playing .title  { font-size: 13px; }
-            .now-playing .artist { font-size: 11px; }
+  /* LEFT: song info */
+  .now-playing {
+    width: auto;
+    flex: 1;
+    gap: 8px;
+  }
 
-            /* Row 2: controls full width */
-            .player-controls { width: 100%; gap: 4px; }
-            .control-buttons { gap: 16px; justify-content: center; }
-            .control-buttons button { font-size: 15px; padding: 5px; }
-            #play-pause-btn { width: 34px; height: 34px; font-size: 12px !important; }
-            .progress-container { max-width: 100%; font-size: 10px; gap: 7px; }
+  .now-playing img {
+    width: 40px;
+    height: 40px;
+  }
 
-            /* Hide volume — no room */
-            .player-right { display: none; }
-        }
+  .now-playing .title {
+    font-size: 12px;
+  }
+
+  .now-playing .artist {
+    font-size: 10px;
+  }
+
+  /* CENTER: main controls */
+  .player-controls {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+  }
+
+  .control-buttons {
+    gap: 10px;
+  }
+
+  /* RIGHT: extra controls */
+  .player-right {
+    display: flex !important;
+    align-items: center;
+    gap: 8px;
+  }
+
+   @media (max-width: 600px) {
+  .volume-slider {
+    display: none;
+  }
+}
+
+  /* PROGRESS BAR — make it tiny */
+  .progress-container {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 3px;
+  }
+
+  .progress-bar {
+    height: 3px;
+  }
+}
 
         /* ══════════════════════════════
            RESPONSIVE — Very small (≤ 380px)
@@ -795,6 +834,42 @@
             /* Hide progress bar — too narrow to be useful */
             .progress-container { display: none; }
         }
+
+        #main-content {
+            padding-bottom :150px;
+        }
+        @media (max-width:380px){
+            #main-content{
+                padding-bottom:80px;
+                
+            }
+        }
+        .search-box{
+            flex:1;
+            min-width:0;
+        }
+
+        .auth-buttons{
+            flex-shrink:0;
+        }
+        body{
+            grid-template-rows:1fr auto;
+        }
+        @media (max-width:600px){
+            #top-bar{
+                display:flex;
+                align-items:center;
+            }
+            .search-box{
+                flex:1;
+                min-width:0;
+            }
+            .auth-buttons{
+                flex-shrink:0;
+            }
+        }
+
+
     </style>
 </head>
 <body>
@@ -1009,9 +1084,10 @@ const songs = [
     { id:35, title:"Rasputin",artist:"Boney M", img:"https://images.genius.com/705db109f7e937588b29b689f2e1937e.1000x1000x1.png",     duration:"3:40", audio:"My_Favorite_Songs/Boney M - Rasputin (Lyrics).mp3" },
     { id:36, title:"Shape of You", artist:"Ed Sheeran",img:"https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSbGbUXRuyR2MJWFN0nNg5-uP08pkaihgitcQ&s",    duration:"4:23", audio:"My_Favorite_Songs/Ed Sheeran - Shape of You (Official Music Video).mp3" },
     { id:37, title:"O Ri Chiraiya",artist:"Swanand Kirkire", img:"https://i1.sndcdn.com/artworks-000169935770-ko6ckk-t500x500.jpg",  duration:"4:33", audio:"My_Favorite_Songs/O Ri Chiraiya(Lyrical)：Yaariyan 2.mp3" },
+    { id:38, title:"Jaiye Sajana",artist:"Jasmine Sandlas, Satinder Sartaaj", img:"https://images.herzindagi.info/her-zindagi-english/images/2026/03/25/article/image/Main---2026-03-25T152222.881-1774432384580.webp",  duration:"1:55", audio:"My_Favorite_Songs/Jaiye Sajana (Live at Dhurandhar The Revenge - Music Album Launch)｜ Shashwat Sachdev,Jasmine Sandlas.mp3" },
 ];
 
-const weeklyIds     = [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20];
+const weeklyIds     = [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,38];
 const newReleaseIds = [21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37];
 const trendingList  = [
     { id:8,  rank:1, date:"2025", album:"Dhurandhar" },
@@ -1021,6 +1097,7 @@ const trendingList  = [
     { id:25, rank:5, date:"2025", album:"Dhurandhar" },
     { id:35, rank:6, date:"1978", album:"Nightflight to Venus" },
     { id:33, rank:7, date:"2024", album:"Jigra" },
+    
 ];
 
 // ═══════════════════════════════════════
@@ -1335,5 +1412,7 @@ document.querySelectorAll('.menu-item').forEach(item => {
 
 console.log('✅ Melodies — real audio engine loaded.');
 </script>
+
 </body>
+
 </html>
