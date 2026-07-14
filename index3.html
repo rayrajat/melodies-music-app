@@ -1,0 +1,1832 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Melodies • All the Best Songs in One Place</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        :root {
+            --bg: #0a0a0a;
+            --sidebar: #111111;
+            --accent-pink: #ff00cc;
+            --accent-purple: #9900ff;
+            --text: #e0e0e0;
+            --text-light: #aaaaaa;
+            --surface: #181818;
+            --surface2: #1e1e1e;
+            --border: #2a2a2a;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        /* Ensure viewport fills exactly the visible screen on mobile browsers */
+        html { height: -webkit-fill-available; }
+
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            /* 100dvh = dynamic viewport height — shrinks when mobile browser chrome is visible
+               so the player is never hidden behind the address/nav bar.
+               Fallback chain: dvh → svh → vh → webkit-fill-available */
+            height: 100vh;
+            height: 100svh;
+            height: 100dvh;
+            min-height: -webkit-fill-available;
+            overflow: hidden;
+            display: grid;
+            grid-template-columns: 260px 1fr;
+            grid-template-rows: 1fr 90px;
+            grid-template-areas:
+                "sidebar main"
+                "player  player";
+        }
+
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #333; border-radius: 4px; }
+
+        /* ── SIDEBAR ── */
+        #sidebar {
+            grid-area: sidebar;
+            background: var(--sidebar);
+            border-right: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+            overflow-x: hidden;
+            transition: width 0.3s ease;
+        }
+
+        .logo {
+            font-size: 28px;
+            font-weight: 800;
+            background: linear-gradient(90deg, #ff00cc, #9900ff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            padding: 24px 28px 28px;
+            letter-spacing: -1px;
+            flex-shrink: 0;
+        }
+
+        .section-title {
+            padding: 20px 28px 8px;
+            font-size: 11px;
+            color: #555;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            font-weight: 600;
+        }
+
+        .menu-item {
+            padding: 11px 28px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            color: var(--text-light);
+            text-decoration: none;
+            font-size: 14px;
+            transition: all 0.2s;
+            border-left: 3px solid transparent;
+            cursor: pointer;
+            /* accessibility: visible focus */
+            outline: none;
+        }
+        .menu-item:focus-visible { box-shadow: inset 0 0 0 2px var(--accent-pink); }
+        .menu-item i { width: 16px; text-align: center; font-size: 14px; }
+        .menu-item:hover { background: rgba(255,255,255,0.04); color: white; }
+        .menu-item.active {
+            background: rgba(255,0,204,0.12);
+            color: var(--accent-pink);
+            font-weight: 600;
+            border-left-color: var(--accent-pink);
+        }
+        .menu-item.add-playlist { color: var(--accent-pink); }
+        .menu-item.add-playlist:hover { background: rgba(255,0,204,0.1); }
+
+        .sidebar-spacer { flex: 1; min-height: 16px; }
+
+        .logout-wrap { padding: 12px 0; border-top: 1px solid var(--border); }
+        .menu-item.logout { color: #ff6b6b; }
+        .menu-item.logout:hover { background: rgba(255,107,107,0.1); }
+
+        /* ── MAIN CONTENT ── */
+        #main-content {
+            grid-area: main;
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+            overflow-x: hidden;
+        }
+
+        /* ── TOP BAR ── */
+        #top-bar {
+            height: 64px;
+            background: rgba(17,17,17,0.9);
+            backdrop-filter: blur(12px);
+            display: flex;
+            align-items: center;
+            padding: 0 28px;
+            gap: 20px;
+            border-bottom: 1px solid var(--border);
+            position: sticky;
+            top: 0;
+            z-index: 50;
+            flex-shrink: 0;
+        }
+
+        #hamburger {
+            font-size: 20px;
+            color: var(--text-light);
+            cursor: pointer;
+            padding: 8px;
+            border-radius: 8px;
+            transition: all 0.2s;
+            flex-shrink: 0;
+        }
+        #hamburger:hover { background: rgba(255,255,255,0.08); color: white; }
+
+        /* ── SEARCH (now functional) ── */
+        .search-box {
+            flex: 1;
+            min-width: 0;
+            max-width: 380px;
+            position: relative;
+        }
+        .search-box input {
+            width: 100%;
+            background: var(--surface2);
+            border: 1px solid var(--border);
+            border-radius: 30px;
+            padding: 10px 36px 10px 42px;
+            color: white;
+            font-size: 14px;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+        .search-box input:focus { border-color: var(--accent-pink); }
+        .search-box input::placeholder { color: #555; }
+        .search-box .search-icon {
+            position: absolute;
+            left: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #555;
+            font-size: 13px;
+            pointer-events: none;
+        }
+        .search-clear {
+            position: absolute;
+            right: 13px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #555;
+            font-size: 12px;
+            cursor: pointer;
+            display: none;
+            padding: 3px;
+            transition: color 0.2s;
+        }
+        .search-clear:hover { color: white; }
+        .search-box input:not(:placeholder-shown) ~ .search-clear { display: block; }
+
+        /* Search results dropdown */
+        #search-results {
+            display: none;
+            position: absolute;
+            top: calc(100% + 6px);
+            left: 0; right: 0;
+            background: #1a1a1a;
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            overflow: hidden;
+            z-index: 200;
+            box-shadow: 0 12px 40px rgba(0,0,0,0.7);
+            max-height: 340px;
+            overflow-y: auto;
+        }
+        #search-results.open { display: block; }
+        .search-result-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 16px;
+            cursor: pointer;
+            transition: background 0.15s;
+        }
+        .search-result-item:hover { background: rgba(255,0,204,0.08); }
+        .search-result-item img {
+            width: 40px; height: 40px;
+            border-radius: 6px;
+            object-fit: cover;
+            flex-shrink: 0;
+        }
+        .search-result-item .sr-title { font-size: 13px; font-weight: 600; color: white; }
+        .search-result-item .sr-artist { font-size: 11px; color: var(--text-light); margin-top: 2px; }
+        .search-no-results {
+            padding: 20px 16px;
+            font-size: 13px;
+            color: #555;
+            text-align: center;
+        }
+
+        .topbar-spacer { flex: 1; }
+
+        .nav-links { display: flex; gap: 24px; font-size: 14px; }
+        .nav-links a { color: var(--text-light); text-decoration: none; transition: color 0.2s; }
+        .nav-links a:hover { color: white; }
+        .nav-links a.premium { color: var(--accent-pink); font-weight: 600; }
+
+        .auth-buttons { display: flex; gap: 10px; align-items: center; flex-shrink: 0; }
+        .auth-buttons a {
+            padding: 8px 20px;
+            border-radius: 30px;
+            text-decoration: none;
+            font-size: 13px;
+            font-weight: 600;
+            transition: all 0.2s;
+            white-space: nowrap;
+        }
+        .login-btn { border: 1.5px solid var(--accent-pink); color: var(--accent-pink); }
+        .login-btn:hover { background: rgba(255,0,204,0.1); }
+        .signup-btn {
+            background: var(--accent-pink);
+            color: white;
+            box-shadow: 0 4px 15px rgba(255,0,204,0.35);
+        }
+        .signup-btn:hover { background: #ff33dd; transform: translateY(-1px); }
+
+        /* ── HERO ── */
+        #hero {
+            min-height: 420px;
+            background:
+                linear-gradient(to right, rgba(0,0,0,0.88) 45%, rgba(0,0,0,0.4) 100%),
+                url('https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSuIMvzx7VbXt51xKQ5Ix9RdkizTjWz5XYN4A&s') center/cover no-repeat;
+            display: flex;
+            align-items: center;
+            padding: 60px;
+            flex-shrink: 0;
+        }
+
+        .hero-content { max-width: 560px; }
+        .hero-content h1 {
+            font-size: 48px;
+            font-weight: 800;
+            line-height: 1.1;
+            margin-bottom: 16px;
+            letter-spacing: -1px;
+        }
+        .hero-content h1 span { color: var(--accent-pink); }
+        .hero-content p {
+            font-size: 15px;
+            line-height: 1.7;
+            color: #bbb;
+            margin-bottom: 32px;
+            max-width: 460px;
+        }
+        .hero-buttons { display: flex; gap: 14px; flex-wrap: wrap; }
+        .hero-buttons button {
+            padding: 13px 28px;
+            border-radius: 30px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            border: none;
+            transition: all 0.25s;
+        }
+        .discover-btn {
+            background: var(--accent-pink);
+            color: white;
+            box-shadow: 0 6px 20px rgba(255,0,204,0.4);
+        }
+        .discover-btn:hover { background: #ff33dd; transform: translateY(-2px); box-shadow: 0 8px 25px rgba(255,0,204,0.5); }
+        .playlist-btn {
+            background: transparent;
+            color: white;
+            border: 1.5px solid rgba(255,255,255,0.4) !important;
+        }
+        .playlist-btn:hover { background: rgba(255,255,255,0.1); border-color: white !important; }
+
+        /* ── SECTIONS ── */
+        .section { padding: 36px 48px; }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 22px;
+        }
+        .section-header h2 { font-size: 22px; font-weight: 700; color: white; letter-spacing: -0.5px; }
+        .section-header h2 span { color: var(--accent-pink); }
+        .view-all {
+            color: var(--accent-pink);
+            text-decoration: none;
+            font-size: 13px;
+            font-weight: 600;
+            opacity: 0.85;
+            transition: opacity 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .view-all:hover { opacity: 1; }
+
+        /* ── MOBILE OVERLAY ── */
+        #sidebar-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.65);
+            z-index: 198;
+            backdrop-filter: blur(2px);
+        }
+        #sidebar-overlay.show { display: block; }
+
+        /* ── SONG CARDS ── */
+        .cards-container {
+            display: flex;
+            gap: 20px;
+            overflow-x: auto;
+            padding-bottom: 8px;
+            scrollbar-width: none;
+        }
+        .cards-container::-webkit-scrollbar { display: none; }
+
+        .song-card {
+            width: 170px;
+            background: var(--surface);
+            border-radius: 12px;
+            overflow: hidden;
+            transition: all 0.25s;
+            flex-shrink: 0;
+            cursor: pointer;
+            border: 1px solid transparent;
+            outline: none;
+        }
+        .song-card:focus-visible { border-color: var(--accent-pink); box-shadow: 0 0 0 2px rgba(255,0,204,0.4); }
+        .song-card:hover {
+            transform: translateY(-6px);
+            box-shadow: 0 12px 30px rgba(255,0,204,0.18);
+            border-color: rgba(255,0,204,0.2);
+        }
+        /* Active/playing card state */
+        .song-card.playing {
+            border-color: var(--accent-pink);
+            box-shadow: 0 0 0 1px rgba(255,0,204,0.35), 0 8px 24px rgba(255,0,204,0.2);
+        }
+        .song-card.playing .card-playing-badge {
+            display: flex;
+        }
+
+        .song-card .cover-wrap { position: relative; overflow: hidden; }
+        .song-card img {
+            width: 100%;
+            height: 170px;
+            object-fit: cover;
+            display: block;
+            transition: transform 0.35s;
+        }
+        .song-card:hover img { transform: scale(1.05); }
+
+        .song-card .play-overlay {
+            position: absolute;
+            inset: 0;
+            background: rgba(0,0,0,0.45);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+        .song-card:hover .play-overlay { opacity: 1; }
+        .song-card.playing .play-overlay { opacity: 1; background: rgba(0,0,0,0.3); }
+
+        .play-overlay .play-circle {
+            width: 42px; height: 42px;
+            background: var(--accent-pink);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 16px rgba(255,0,204,0.6);
+        }
+        .play-overlay .play-circle i { color: white; font-size: 14px; margin-left: 2px; }
+
+        /* Animated equaliser on playing card */
+        .card-playing-badge {
+            display: none;
+            position: absolute;
+            bottom: 8px; right: 8px;
+            background: var(--accent-pink);
+            border-radius: 6px;
+            padding: 4px 6px;
+            gap: 2px;
+            align-items: flex-end;
+        }
+        .eq-bar {
+            width: 3px;
+            background: white;
+            border-radius: 2px;
+            animation: eq-bounce 0.6s ease-in-out infinite alternate;
+        }
+        .eq-bar:nth-child(1) { height: 8px; animation-delay: 0s; }
+        .eq-bar:nth-child(2) { height: 12px; animation-delay: 0.15s; }
+        .eq-bar:nth-child(3) { height: 6px; animation-delay: 0.3s; }
+        @keyframes eq-bounce {
+            from { transform: scaleY(0.4); }
+            to   { transform: scaleY(1); }
+        }
+        /* Pause eq bars when not playing */
+        .song-card.playing.paused .eq-bar { animation-play-state: paused; }
+
+        .song-card .info { padding: 12px 14px 14px; }
+        .song-card .title {
+            font-size: 14px;
+            font-weight: 600;
+            color: white;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            margin-bottom: 3px;
+        }
+        /* FIXED: artist ellipsis on cards */
+        .song-card .artist {
+            font-size: 12px;
+            color: var(--text-light);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        /* ── TRENDING TABLE ── */
+        .trending-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: var(--surface);
+            border-radius: 14px;
+            overflow: hidden;
+        }
+        .trending-table thead th {
+            background: #141414;
+            padding: 14px 20px;
+            text-align: left;
+            font-size: 12px;
+            font-weight: 600;
+            color: #555;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .trending-table tbody tr {
+            border-top: 1px solid #222;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .trending-table tbody tr:hover { background: var(--surface2); }
+        .trending-table tbody tr.playing { background: rgba(255,0,204,0.07); }
+
+        .trending-table td { padding: 14px 20px; font-size: 14px; color: var(--text-light); vertical-align: middle; }
+
+        .rank { font-size: 16px; font-weight: 700; color: var(--accent-pink); width: 44px; text-align: center; }
+
+        /* Animated equaliser in trending table rank cell */
+        .rank-eq {
+            display: none;
+            gap: 2px;
+            align-items: flex-end;
+            justify-content: center;
+            height: 18px;
+        }
+        tr.playing .rank-eq { display: flex; }
+        tr.playing .rank-num { display: none; }
+        .rank-eq .eq-bar { width: 3px; background: var(--accent-pink); border-radius: 2px; }
+        tr.playing.paused .rank-eq .eq-bar { animation-play-state: paused; }
+
+        .song-info { display: flex; align-items: center; gap: 14px; }
+        .song-info img {
+            width: 46px; height: 46px;
+            border-radius: 8px;
+            object-fit: cover;
+            flex-shrink: 0;
+        }
+        .song-info .title { font-size: 14px; font-weight: 600; color: white; margin-bottom: 3px; }
+        .song-info .artist { font-size: 12px; color: var(--text-light); }
+
+        /* Album cell ellipsis */
+        .col-album-cell { max-width: 180px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+        .heart-btn {
+            background: none;
+            border: none;
+            color: #444;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.2s;
+            padding: 4px 8px;
+            border-radius: 4px;
+        }
+        .heart-btn:hover { color: var(--accent-pink); transform: scale(1.2); }
+        .heart-btn:focus-visible { outline: 2px solid var(--accent-pink); outline-offset: 2px; }
+        .heart-btn.liked { color: var(--accent-pink); }
+
+        /* ── TOAST NOTIFICATION ── */
+        #toast {
+            position: fixed;
+            bottom: 108px;
+            left: 50%;
+            transform: translateX(-50%) translateY(10px);
+            background: #222;
+            border: 1px solid var(--border);
+            color: white;
+            font-size: 13px;
+            padding: 10px 20px;
+            border-radius: 30px;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.25s, transform 0.25s;
+            z-index: 300;
+            white-space: nowrap;
+        }
+        #toast.show {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+
+        /* ── MINI PLAYER ── */
+        #mini-player {
+            grid-area: player;
+            background: #141414;
+            border-top: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            padding: 0 28px;
+            gap: 20px;
+            z-index: 100;
+            min-height: 90px;
+            height: 90px;
+            overflow: hidden;
+        }
+
+        /* aria-live region for screen readers */
+        #player-announce {
+            position: absolute;
+            width: 1px; height: 1px;
+            overflow: hidden;
+            clip: rect(0,0,0,0);
+            white-space: nowrap;
+        }
+
+        #mini-player.idle .now-playing img { opacity: 0.25; filter: grayscale(1); }
+        #mini-player.idle #player-title    { color: #555; }
+        #mini-player.idle #player-artist   { color: #444; }
+        #mini-player.idle #play-pause-btn  { opacity: 0.4; cursor: default; pointer-events: none; }
+        /* Dim all controls in idle state */
+        #mini-player.idle #prev-btn,
+        #mini-player.idle #next-btn,
+        #mini-player.idle #shuffle-btn,
+        #mini-player.idle #loop-btn {
+            opacity: 0.3;
+            pointer-events: none;
+        }
+
+        .now-playing {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            flex: 0 0 auto;
+            width: clamp(160px, 26%, 260px);
+            min-width: 0;
+            overflow: hidden;
+        }
+
+        /* CSS-only idle placeholder — no external image needed */
+        .player-thumb-idle {
+            width: 52px; height: 52px;
+            border-radius: 8px;
+            background: var(--surface2);
+            border: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            color: #444;
+            font-size: 20px;
+        }
+        #player-img {
+            width: 52px; height: 52px;
+            border-radius: 8px;
+            object-fit: cover;
+            flex-shrink: 0;
+            transition: opacity 0.3s, filter 0.3s;
+            display: none; /* hidden until a song loads */
+        }
+
+        .now-playing .track-info { min-width: 0; overflow: hidden; }
+        .now-playing .title {
+            font-size: 14px;
+            font-weight: 600;
+            color: white;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            transition: color 0.3s;
+        }
+        .now-playing .artist {
+            font-size: 12px;
+            color: var(--text-light);
+            margin-top: 2px;
+            transition: color 0.3s;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        #player-heart {
+            font-size: 16px;
+            color: #444;
+            cursor: pointer;
+            flex-shrink: 0;
+            transition: all 0.2s;
+            margin-left: 4px;
+            background: none;
+            border: none;
+            padding: 4px;
+            border-radius: 4px;
+        }
+        #player-heart:hover { color: var(--accent-pink); transform: scale(1.2); }
+        #player-heart:focus-visible { outline: 2px solid var(--accent-pink); outline-offset: 2px; }
+        #player-heart.liked { color: var(--accent-pink); }
+
+        .player-controls {
+            flex: 1;
+            min-width: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+        }
+        .control-buttons {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-shrink: 0;
+        }
+        .control-buttons button {
+            background: none;
+            border: none;
+            color: var(--text-light);
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.2s;
+            padding: 6px;
+            border-radius: 50%;
+        }
+        .control-buttons button:hover { color: white; background: rgba(255,255,255,0.08); }
+        .control-buttons button:focus-visible { outline: 2px solid var(--accent-pink); outline-offset: 2px; }
+
+        #play-pause-btn {
+            width: 40px; height: 40px;
+            background: var(--accent-pink) !important;
+            color: white !important;
+            border-radius: 50%;
+            font-size: 15px !important;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 14px rgba(255,0,204,0.4);
+            transition: all 0.2s !important;
+        }
+        #play-pause-btn:hover { background: #ff33dd !important; transform: scale(1.08); }
+
+        .progress-container {
+            width: 100%;
+            max-width: 480px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 11px;
+            color: var(--text-light);
+        }
+
+        /* Draggable progress bar */
+        .progress-bar {
+            flex: 1;
+            height: 4px;
+            background: #2e2e2e;
+            border-radius: 4px;
+            position: relative;
+            cursor: pointer;
+            overflow: visible;
+            transition: height 0.15s;
+        }
+        .progress-bar:hover { height: 6px; }
+        .progress {
+            position: absolute;
+            left: 0; top: 0;
+            height: 100%;
+            background: linear-gradient(90deg, var(--accent-pink), var(--accent-purple));
+            width: 0%;
+            border-radius: 4px;
+            pointer-events: none;
+        }
+        /* Drag thumb */
+        .progress-thumb {
+            position: absolute;
+            top: 50%;
+            transform: translate(-50%, -50%) scale(0);
+            width: 12px; height: 12px;
+            background: white;
+            border-radius: 50%;
+            pointer-events: none;
+            transition: transform 0.15s;
+            box-shadow: 0 0 4px rgba(0,0,0,0.5);
+        }
+        .progress-bar:hover .progress-thumb,
+        .progress-bar.dragging .progress-thumb { transform: translate(-50%, -50%) scale(1); }
+
+        .player-right {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            color: var(--text-light);
+            flex-shrink: 0;
+        }
+        /* Mutable volume icon — clickable to mute */
+        #vol-icon {
+            font-size: 16px;
+            cursor: pointer;
+            transition: color 0.2s;
+            flex-shrink: 0;
+            background: none;
+            border: none;
+            color: var(--text-light);
+            padding: 4px;
+            border-radius: 4px;
+        }
+        #vol-icon:hover { color: white; }
+        #vol-icon:focus-visible { outline: 2px solid var(--accent-pink); outline-offset: 2px; }
+        .volume-slider {
+            width: 80px;
+            accent-color: var(--accent-pink);
+            cursor: pointer;
+        }
+
+        /* ══════════════════════════════
+           TABLET (600–900px)
+        ══════════════════════════════ */
+        @media (max-width: 900px) {
+            body {
+                grid-template-columns: 1fr;
+                grid-template-rows: 1fr 90px;
+                grid-template-areas: "main" "player";
+            }
+            #sidebar {
+                position: fixed;
+                top: 0; left: 0; bottom: 0;
+                width: 260px !important;
+                z-index: 200;
+                transform: translateX(-100%);
+                transition: transform 0.3s ease;
+            }
+            #sidebar.open { transform: translateX(0); }
+
+            .nav-links { display: none; }
+            .search-box { max-width: 200px; }
+
+            #hero { padding: 40px 28px; min-height: 320px; }
+            .hero-content h1 { font-size: 34px; }
+            .hero-content p  { font-size: 14px; max-width: 100%; }
+
+            .section { padding: 24px 20px; }
+            .song-card { width: 150px; }
+            .song-card img { height: 150px; }
+
+            .trending-table th.col-date,
+            .trending-table th.col-album,
+            .trending-table td:nth-child(3),
+            .trending-table td:nth-child(4),
+            .trending-table td:nth-child(5) { display: none; }
+
+            .now-playing { width: clamp(140px, 24%, 220px); }
+            .volume-slider { display: none; }
+            #mini-player { gap: 14px; padding: 0 16px; }
+        }
+
+        /* ══════════════════════════════
+           MOBILE (≤600px)
+        ══════════════════════════════ */
+        @media (max-width: 600px) {
+            body {
+                grid-template-rows: 1fr 70px;
+                height: 100vh;
+                height: 100svh;
+                height: 100dvh;
+                min-height: -webkit-fill-available;
+            }
+
+            #top-bar { padding: 0 12px; gap: 8px; height: 54px; }
+            .nav-links    { display: none; }
+            .topbar-spacer { display: none; }
+            .auth-buttons .login-btn  { padding: 7px 12px; font-size: 12px; }
+            .auth-buttons .signup-btn { padding: 7px 12px; font-size: 12px; }
+            .search-box { flex: 1; min-width: 0; max-width: none; }
+            .search-box input { font-size: 13px; padding: 8px 32px 8px 36px; }
+            .search-box .search-icon { left: 12px; font-size: 12px; }
+
+            #hero {
+                min-height: 220px;
+                padding: 24px 16px;
+                background:
+                    linear-gradient(rgba(0,0,0,0.85), rgba(0,0,0,0.9)),
+                    url('https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSuIMvzx7VbXt51xKQ5Ix9RdkizTjWz5XYN4A&s') center/cover no-repeat;
+                align-items: flex-start;
+            }
+            .hero-content h1 { font-size: 26px; letter-spacing: -0.5px; margin-bottom: 10px; }
+            .hero-content p  { font-size: 13px; margin-bottom: 18px; }
+            .hero-buttons    { gap: 10px; }
+            .hero-buttons button { padding: 10px 18px; font-size: 13px; }
+
+            .section { padding: 12px 12px; }
+            .section-header { margin-bottom: 10px; }
+            .section-header h2 { font-size: 17px; }
+            .view-all { font-size: 12px; }
+            .cards-container { gap: 12px; }
+
+            .song-card { width: 130px; }
+            .song-card img { height: 130px; }
+            .song-card .info   { padding: 8px 10px 10px; }
+            .song-card .title  { font-size: 12px; }
+            .song-card .artist { font-size: 11px; }
+
+            .trending-table { background: none; border-radius: 0; }
+            .trending-table thead { display: none; }
+            .trending-table tbody { display: flex; flex-direction: column; gap: 3px; }
+            .trending-table tbody tr {
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                background: var(--surface);
+                border-radius: 10px;
+                border: none !important;
+                padding: 8px 10px;
+            }
+            .trending-table tbody tr:hover { background: var(--surface2); }
+            .trending-table td { padding: 0; border: none; font-size: 13px; }
+            .trending-table td:nth-child(3),
+            .trending-table td:nth-child(4),
+            .trending-table td:nth-child(5) { display: none; }
+            .rank { font-size: 12px; width: 22px; flex-shrink: 0; }
+            .song-info { gap: 10px; }
+            .song-info img { width: 38px; height: 38px; border-radius: 6px; }
+            .song-info .title  { font-size: 13px; }
+            .song-info .artist { font-size: 11px; }
+            .trending-table td:last-child { margin-left: auto; flex-shrink: 0; }
+
+            /* PLAYER */
+            #mini-player {
+                flex-direction: row;
+                align-items: center;
+                padding: 0 10px;
+                height: 70px; min-height: 70px; max-height: 70px;
+                gap: 0;
+                position: relative;
+                overflow: hidden;
+            }
+            .now-playing {
+                width: auto; flex: 0 0 auto;
+                max-width: 38%;
+                gap: 8px; min-width: 0;
+            }
+            .now-playing img, .player-thumb-idle { width: 38px; height: 38px; font-size: 16px; }
+            .now-playing .title  { font-size: 12px; }
+            .now-playing .artist { font-size: 10px; }
+            #player-heart { font-size: 14px; margin-left: 6px; flex-shrink: 0; }
+
+            .player-controls {
+                flex: 1; min-width: 0;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                gap: 0;
+                padding: 0 4px;
+            }
+            .control-buttons { gap: 6px; }
+            .control-buttons button { font-size: 15px; padding: 5px; }
+            #play-pause-btn { width: 36px; height: 36px; font-size: 14px !important; }
+
+            .player-right { gap: 6px; flex-shrink: 0; }
+            .volume-slider { display: none; }
+            #vol-icon { font-size: 15px; }
+
+            .progress-container {
+                position: absolute;
+                bottom: 0; left: 0;
+                width: 100%; height: 3px;
+                gap: 0;
+            }
+            .progress-container span { display: none; }
+            .progress-bar { height: 3px !important; border-radius: 0; overflow: hidden; }
+            .progress-thumb { display: none; }
+        }
+
+        /* ══════════════════════════════
+           VERY SMALL (≤380px)
+        ══════════════════════════════ */
+        @media (max-width: 380px) {
+            body {
+                grid-template-rows: 1fr 64px;
+                height: 100vh;
+                height: 100svh;
+                height: 100dvh;
+                min-height: -webkit-fill-available;
+            }
+
+            #top-bar { height: 50px; padding: 0 10px; gap: 6px; }
+            .auth-buttons .login-btn  { display: none; }
+            .auth-buttons .signup-btn { padding: 6px 10px; font-size: 11px; }
+
+            .hero-content h1 { font-size: 22px; }
+            .hero-buttons button { padding: 9px 14px; font-size: 12px; }
+
+            .song-card { width: 116px; }
+            .song-card img { height: 116px; }
+
+            #mini-player {
+                height: 64px; min-height: 64px; max-height: 64px;
+                padding: 0 8px; gap: 0;
+            }
+            .now-playing { max-width: none; flex: 0 0 auto; gap: 6px; }
+            .now-playing img, .player-thumb-idle { width: 36px; height: 36px; font-size: 14px; }
+            .now-playing .track-info { display: none; }
+            #player-heart { margin-left: 4px; }
+
+            .player-controls { padding: 0 2px; }
+            .control-buttons { gap: 2px; }
+            .control-buttons button { font-size: 14px; padding: 5px 7px; }
+            #shuffle-btn, #loop-btn { display: none; }
+            #play-pause-btn { width: 34px; height: 34px; font-size: 13px !important; }
+
+            .progress-container { display: none; }
+        }
+
+        #main-content { padding-bottom: 0; }
+    </style>
+</head>
+<body>
+
+<!-- Screen reader live region -->
+<div id="player-announce" aria-live="polite" aria-atomic="true"></div>
+
+<!-- Toast notification -->
+<div id="toast"></div>
+
+<!-- Sidebar overlay -->
+<div id="sidebar-overlay"></div>
+
+<!-- ══════════ SIDEBAR ══════════ -->
+<nav id="sidebar" aria-label="Main navigation">
+    <div class="logo">Melodies</div>
+
+    <div class="section-title">Menu</div>
+    <a href="#" class="menu-item active"><i class="fas fa-home" aria-hidden="true"></i> Home</a>
+    <a href="#" class="menu-item"><i class="fas fa-compass" aria-hidden="true"></i> Discover</a>
+    <a href="#" class="menu-item"><i class="fas fa-compact-disc" aria-hidden="true"></i> Albums</a>
+    <a href="#" class="menu-item"><i class="fas fa-users" aria-hidden="true"></i> Artists</a>
+
+    <div class="section-title">Library</div>
+    <a href="#" class="menu-item"><i class="fas fa-clock" aria-hidden="true"></i> Recently Added</a>
+    <a href="#" class="menu-item"><i class="fas fa-fire" aria-hidden="true"></i> Most Played</a>
+
+    <div class="section-title">Playlist &amp; Favorites</div>
+    <a href="#" class="menu-item"><i class="fas fa-heart" aria-hidden="true"></i> Your Favorites</a>
+    <a href="#" class="menu-item"><i class="fas fa-list" aria-hidden="true"></i> Your Playlist</a>
+    <a href="#" class="menu-item add-playlist"><i class="fas fa-plus-circle" aria-hidden="true"></i> Add Playlist</a>
+
+    <div class="section-title">General</div>
+    <a href="#" class="menu-item"><i class="fas fa-cog" aria-hidden="true"></i> Settings</a>
+
+    <div class="sidebar-spacer"></div>
+
+    <div class="logout-wrap">
+        <a href="#" class="menu-item logout"><i class="fas fa-sign-out-alt" aria-hidden="true"></i> Logout</a>
+    </div>
+</nav>
+
+<!-- ══════════ MAIN CONTENT ══════════ -->
+<div id="main-content">
+
+    <header id="top-bar">
+        <i id="hamburger" class="fas fa-bars" role="button" aria-label="Toggle sidebar" tabindex="0"></i>
+
+        <!-- Functional search box -->
+        <div class="search-box" style="position:relative;">
+            <i class="fas fa-search search-icon" aria-hidden="true"></i>
+            <input type="text" id="search-input" placeholder="Search for music, artists..." autocomplete="off" aria-label="Search songs and artists" aria-autocomplete="list" aria-controls="search-results">
+            <i class="fas fa-times search-clear" id="search-clear" aria-label="Clear search" role="button" tabindex="0"></i>
+            <div id="search-results" role="listbox" aria-label="Search results"></div>
+        </div>
+
+        
+    </header>
+
+    <section id="hero" aria-label="Featured">
+        <div class="hero-content">
+            <h1>All the <span>Best Songs</span><br>in One Place</h1>
+            <p>On our website, you can access an amazing collection of popular and new songs. Stream your favorite tracks in high quality and enjoy without interruptions. Whatever your taste in music, we have it all for you!</p>
+            <div class="hero-buttons">
+                <button class="discover-btn">Discover Now</button>
+                <button class="playlist-btn">Create Playlist</button>
+            </div>
+        </div>
+    </section>
+
+    <section class="section" aria-label="Weekly Top Songs">
+        <div class="section-header">
+            <h2>Weekly Top <span>Songs</span></h2>
+            <a href="#" class="view-all">View All <i class="fas fa-arrow-right" aria-hidden="true"></i></a>
+        </div>
+        <div class="cards-container" id="weekly-cards" role="list"></div>
+    </section>
+
+    <section class="section" aria-label="Favourites Songs">
+        <div class="section-header">
+            <h2>Favourites <span>Songs</span></h2>
+            <a href="#" class="view-all">View All <i class="fas fa-arrow-right" aria-hidden="true"></i></a>
+        </div>
+        <div class="cards-container" id="favourites-cards" role="list"></div>
+    </section>
+
+    <section class="section" aria-label="New Release Songs">
+        <div class="section-header">
+            <h2>New Release <span>Songs</span></h2>
+            <a href="#" class="view-all">View All <i class="fas fa-arrow-right" aria-hidden="true"></i></a>
+        </div>
+        <div class="cards-container" id="new-release-cards" role="list"></div>
+    </section>
+
+    <section class="section" aria-label="Newly Added Songs">
+        <div class="section-header">
+            <h2>Newly Added <span>Songs</span></h2>
+            <a href="#" class="view-all">View All <i class="fas fa-arrow-right" aria-hidden="true"></i></a>
+        </div>
+        <div class="cards-container" id="newly-added-cards" role="list"></div>
+    </section>
+    <section class="section" aria-label="Suggested Songs">
+        <div class="section-header">
+            <h2>Suggested <span>Songs</span></h2>
+            <a href="#" class="view-all">View All <i class="fas fa-arrow-right" aria-hidden="true"></i></a>
+        </div>
+        <div class="cards-container" id="suggested-cards" role="list"></div>
+    </section>
+
+    <section class="section" aria-label="Trending Songs">
+        <div class="section-header">
+            <h2>Trending <span>Songs</span></h2>
+        </div>
+        <table class="trending-table" role="table">
+            <thead>
+                <tr>
+                    <th scope="col">#</th>
+                    <th scope="col">Song</th>
+                    <th scope="col" class="col-date">Release Date</th>
+                    <th scope="col" class="col-album">Album</th>
+                    <th scope="col">Time</th>
+                    <th scope="col"><span class="sr-only">Actions</span></th>
+                </tr>
+            </thead>
+            <tbody id="trending-body"></tbody>
+        </table>
+    </section>
+
+</div>
+
+<!-- ══════════ MINI PLAYER ══════════ -->
+<div id="mini-player" class="idle" role="region" aria-label="Music player">
+    <div class="now-playing">
+        <!-- CSS idle placeholder — no external image dependency -->
+        <div class="player-thumb-idle" id="player-thumb-idle" aria-hidden="true">
+            <i class="fas fa-music"></i>
+        </div>
+        <img id="player-img" src="" alt="" aria-hidden="true">
+
+        <div class="track-info">
+            <div id="player-title" class="title">No song selected</div>
+            <div id="player-artist" class="artist">Pick a song to play</div>
+        </div>
+        <button id="player-heart" aria-label="Like song"><i class="fas fa-heart" aria-hidden="true"></i></button>
+    </div>
+
+    <div class="player-controls">
+        <div class="control-buttons">
+            <button id="shuffle-btn" aria-label="Shuffle" aria-pressed="false"><i class="fas fa-random" aria-hidden="true"></i></button>
+            <button id="prev-btn"    aria-label="Previous song"><i class="fas fa-step-backward" aria-hidden="true"></i></button>
+            <button id="play-pause-btn" aria-label="Play"><i class="fas fa-play" aria-hidden="true"></i></button>
+            <button id="next-btn"    aria-label="Next song"><i class="fas fa-step-forward" aria-hidden="true"></i></button>
+            <button id="loop-btn"    aria-label="Loop" aria-pressed="false"><i class="fas fa-redo" aria-hidden="true"></i></button>
+        </div>
+        <div class="progress-container">
+            <span id="current-time">0:00</span>
+            <div class="progress-bar" id="progress-bar" role="slider" aria-label="Seek" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" tabindex="0">
+                <div class="progress" id="progress-fill"></div>
+                <div class="progress-thumb" id="progress-thumb"></div>
+            </div>
+            <span id="total-time">0:00</span>
+        </div>
+    </div>
+
+    <div class="player-right">
+        <button id="vol-icon" aria-label="Mute"><i class="fas fa-volume-up" aria-hidden="true"></i></button>
+        <input type="range" class="volume-slider" id="volume-slider" min="0" max="100" value="80" aria-label="Volume">
+    </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════
+//  DATA
+// ═══════════════════════════════════════
+const songs = [
+    { id:1,  title:"Aari Aari",  artist:"Dhurandhar The Revenge", img:"https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTbGp4Z-5N_jeiUvIrzXJC_VBJnICjcxPePFZfdCyF-YFo989caoqa3edjH8oGY86sjJEIiXg&s=10", duration:"3:30", audio:"My_Favorite_Songs/Aari Aari (Audio)： Dhurandhar The Revenge Shashwat S,Bombay R,Khan,Jasmine,Sudhir,Irshad,Reble,Token.mp3" },
+    { id:2,  title:"FAASLE",     artist:"Aditya Rikhari",          img:"https://i.scdn.co/image/ab67616d0000b273f20ec84c83625511df6a4af5", duration:"3:36", audio:"My_Favorite_Songs/Aditya Rikhari - FAASLE.mp3" },
+    { id:3,  title:"Akeli Laila",artist:"Baaghi 4",                img:"https://i.ytimg.com/vi/9PF2aEZMq58/hq720.jpg", duration:"2:40", audio:"My_Favorite_Songs/Baaghi 4： Akeli Laila (Song) ｜ Tiger S,Sonam B,Sanjay D ｜ Payal,Aditya,Paradox ｜ Sajid N,A. Harsha.mp3" },
+    { id:4,  title:"Bairan",     artist:"Banjaare",                img:"https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQLVR7M54KH_BOEmGCuDSQ3inVyQ6jm7gbSNg&s", duration:"2:30", audio:"My_Favorite_Songs/Bairan – Animated Love Story ｜ Banjaare (Official Video).mp3" },
+    { id:5,  title:"Bairi",      artist:"Virat, Miss Parul",       img:"https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSJHz3PyiFwYkNdqJhiv-kCTdfeZchcSucU7A&s", duration:"3:14", audio:"My_Favorite_Songs/Bairi (Official Video) Virat, Miss Parul ｜ Pradeep Solanki, Heena ｜ New Rajasthani Song 2026.mp3" },
+    { id:6,  title:"Darkside x Aaja Sanam", artist:"Lata Mangeshkar & Neoni", img:"https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTmmdtKseJhQYUXzRHpdijWsmzOy8g6-b13_A&s", duration:"3:05", audio:"My_Favorite_Songs/Darkside x Aaja Sanam Madhur Chandni Mein Hum ： MTVR Mashup ｜ Lata Mangeshkar x Neoni ｜ Full Version.mp3" },
+    { id:7,  title:"Dhaaga",     artist:"Nilotpal Bora",            img:"https://c.saavncdn.com/592/Aspirants-Season-1-Music-From-the-TVF-Original-Series--English-2021-20210505184143-500x500.jpg", duration:"3:46", audio:"My_Favorite_Songs/Dhaaga - Official Music Video ｜ TVF's Aspirants ｜ Nilotpal Bora ｜ Hussain Haidry.mp3" },
+    { id:8,  title:"Dhurandhar - Title Track", artist:"Shashwat Sachdev, Hanumankind", img:"https://i.ytimg.com/vi/7IBDa53IsvI/maxresdefault.jpg", duration:"2:58", audio:"My_Favorite_Songs/Dhurandhar - Title Track ｜ Ranveer Singh, Shashwat Sachdev, Hanumankind, Jasmine Sandlas,Aditya Dhar.mp3" },
+    { id:9,  title:"Finding Her",artist:"Bharath, Kushagra & Saaheal", img:"https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSzQSdmocbKdY0pjC6SOXkM4B97OzevFLV34A&s", duration:"3:27", audio:"My_Favorite_Songs/Finding Her.mp3" },
+    { id:10, title:"Raanjhan",   artist:"Parampara Tandon",          img:"https://c.saavncdn.com/436/Do-Patti-Hindi-2024-20250509181115-500x500.jpg", duration:"3:27", audio:"My_Favorite_Songs/Full Video： Raanjhan.mp3" },
+    { id:11, title:"Ganga Ke Kinare", artist:"Bunny Sagar",          img:"https://www.sahaayataa.in/shi_asset/imgs/gallery/mci-image5219-1773505522.jpg", duration:"3:27", audio:"My_Favorite_Songs/Ganga Ke Kinare.mp3" },
+    { id:12, title:"Gehra Hua",  artist:"Arijit Singh",              img:"https://static.toiimg.com/thumb/resizemode-4,width-1280,height-720,msid-125652384/125652384.jpg", duration:"3:51", audio:"My_Favorite_Songs/Gehra Hua.mp3" },
+    { id:13, title:"Haan Ke Haan", artist:"Zendria",                 img:"https://pbs.twimg.com/media/GK4zg0TbQAAQps7.jpg", duration:"2:21", audio:"My_Favorite_Songs/Haan Ke Haan.mp3" },
+    { id:14, title:"Jalwa",      artist:"Carryminati",               img:"https://media.telanganatoday.com/wp-content/uploads/2023/08/jalwa.jpg", duration:"3:29", audio:"My_Favorite_Songs/JALWA - CARRYMINATI X WILY FRENZY.mp3" },
+    { id:15, title:"Unse Jaake Kehdo", artist:"Justh",               img:"https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSp5yWEANwhE7Mw1VUUS8xLe9Y66RL9CaYsiw&s", duration:"3:02", audio:"My_Favorite_Songs/Justh - Unse Jaake Kehdo (Official Music Video).mp3" },
+    { id:16, title:"Laal Pari",  artist:"Yo Yo Honey Singh",         img:"https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSPhDnXmCyMzDtn9zXcgThtTDI7b9nNqObPQg&s", duration:"3:04", audio:"My_Favorite_Songs/LAAL PARI (Song)： Yo Yo Honey Singh ｜ Sajid Nadiadwala ｜ Tarun Mansukhani ｜ Housefull 5.mp3" },
+    { id:17, title:"Madhurashtakam", artist:"Zendria",               img:"https://pbs.twimg.com/media/GK4zg0TbQAAQps7.jpg", duration:"5:01", audio:"My_Favorite_Songs/MADHURASHTAKAM.mp3" },
+    { id:18, title:"Main Bola Hey", artist:"Karthik Rao",            img:"https://i.ytimg.com/vi/sw4y6iZtXE0/sddefault.jpg", duration:"2:50", audio:"My_Favorite_Songs/Main Bola Hey!.mp3" },
+    { id:19, title:"Main Tumhara", artist:"A.R. Rahman, Jonita Gandhi", img:"https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTVh2Z0bqd1b89IhUqB40WjMSG-Etuq2ux8Dw&s", duration:"2:46", audio:"My_Favorite_Songs/Main Tumhara.mp3" },
+    { id:20, title:"Naam Chale", artist:"Vikram Sarkar",             img:"https://c.saavncdn.com/335/Naam-Chale-Unknown-2025-20250624213158-500x500.jpg", duration:"2:29", audio:"My_Favorite_Songs/Naam Chale.mp3" },
+    { id:21, title:"O Re Manwa", artist:"Meghna Mishra",             img:"https://c.saavncdn.com/307/Secret-Superstar-Hindi-2017-20171018063603-500x500.jpg", duration:"3:40", audio:"My_Favorite_Songs/O Re Manwa.mp3" },
+    { id:22, title:"Om Namo Bhagavate Vasudevaya", artist:"Vijay Prakash, Sanjith Hegde", img:"https://c.saavncdn.com/559/Om-Namo-Bhagavate-Vasudevaya-Sanskrit-2022-20220809121217-500x500.jpg", duration:"2:46", audio:"My_Favorite_Songs/Om Namo Bhagavate Vasudevaya.mp3" },
+    { id:23, title:"Paisa",      artist:"Mellow-D, Sachin-Jigar, Vishal Dadlani", img:"https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRczL2S3BN9st8AcGA1rQRfWO4wwzOvpu9uWA&s", duration:"3:06", audio:"My_Favorite_Songs/Paisa.mp3" },
+    { id:24, title:"Radha Rani Lage", artist:"Zendria",              img:"https://pbs.twimg.com/media/GK4zg0TbQAAQps7.jpg", duration:"3:22", audio:"My_Favorite_Songs/Radha Rani Lage.mp3" },
+    { id:25, title:"Shararat",   artist:"Jasmine Sandlas, Shashwat Sachdev", img:"https://static.toiimg.com/thumb/msid-127842599,imgsize-90132,width-400,resizemode-4/127842599.jpg", duration:"3:49", audio:"My_Favorite_Songs/Shararat.mp3" },
+    { id:26, title:"Sunehra",    artist:"Jai Dhir",                  img:"https://i.ytimg.com/vi/-GZ-eEozdIg/maxresdefault.jpg", duration:"3:27", audio:"My_Favorite_Songs/Sunehra.mp3" },
+    { id:27, title:"Badli Si Hawa Hai", artist:"Arijit Singh",       img:"https://d3pc1xvrcw35tl.cloudfront.net/ln/feedImages/400x300/ANI-20250823120533_202508.jpg", duration:"2:47", audio:"My_Favorite_Songs/Badli Si Hawa Hai (Song).mp3" },
+    { id:28, title:"Theme Song – Scam 1992", artist:"Achint",        img:"https://c.saavncdn.com/415/Scam-1992-Theme-Original-Mix-English-2020-20201230214802-500x500.jpg", duration:"2:58", audio:"My_Favorite_Songs/THEME SONG.mp3" },
+    { id:29, title:"Shree Raghuvar Komal Nayan", artist:"Zendria",   img:"https://pbs.twimg.com/media/GK4zg0TbQAAQps7.jpg", duration:"3:33", audio:"My_Favorite_Songs/श्री रघुवर कोमल कमल नयन को पहनाओ जयमाला.mp3" },
+    { id:30, title:"Shree Ram Stuti", artist:"Kids Performance",     img:"https://i.pinimg.com/736x/f2/d6/ed/f2d6ed0bbcb173056a68d14fa18c6fcf.jpg", duration:"3:08", audio:"My_Favorite_Songs/श्री राम स्तुति： ＂श्री राम चंद्र कृपालु भजमन.mp3" },
+    { id:31, title:"Dooron Dooron", artist:"Meghdeep Bose, Paresh Pahuja", img:"https://i.scdn.co/image/ab67616d00001e02ca38512149238c1b4c11b4ae", duration:"4:05", audio:"My_Favorite_Songs/Dooron Dooron (Official Video).mp3" },
+    { id:32, title:"Matkar Maya Ko Ahankar", artist:"Kabir Café",    img:"https://images.genius.com/c9089267cb91d72df34768e3e9e57ac6.1000x1000x1.jpg", duration:"6:05", audio:"My_Favorite_Songs/Matkar Maya Ko Ahankar.mp3" },
+    { id:33, title:"Tenu Sang Rakhna", artist:"Achint, Arijit Singh, Anumita Nadesan", img:"https://images.genius.com/57cf723bbe4e4e75d47c363b21c303ee.1000x1000x1.png", duration:"3:02", audio:"My_Favorite_Songs/Tenu Sang Rakhna - Jigra.mp3" },
+    { id:34, title:"Sahiba",     artist:"Stebin Ben, Jasleen Royal", img:"https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTcjpgK_3YExSHrYo8OhyY3kF2NxgsWFLaaEw&s", duration:"3:37", audio:"My_Favorite_Songs/Sahiba.mp3" },
+    { id:35, title:"Rasputin",   artist:"Boney M",                   img:"https://images.genius.com/705db109f7e937588b29b689f2e1937e.1000x1000x1.png", duration:"3:40", audio:"My_Favorite_Songs/Boney M - Rasputin (Lyrics).mp3" },
+    { id:36, title:"Shape of You", artist:"Ed Sheeran",              img:"https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSbGbUXRuyR2MJWFN0nNg5-uP08pkaihgitcQ&s", duration:"4:23", audio:"My_Favorite_Songs/Ed Sheeran - Shape of You (Official Music Video).mp3" },
+    { id:37, title:"O Ri Chiraiya", artist:"Swanand Kirkire",        img:"https://i1.sndcdn.com/artworks-000169935770-ko6ckk-t500x500.jpg", duration:"4:33", audio:"My_Favorite_Songs/O Ri Chiraiya(Lyrical)：Yaariyan 2.mp3" },
+    { id:38, title:"Jaiye Sajana", artist:"Jasmine Sandlas, Satinder Sartaaj", img:"https://images.herzindagi.info/her-zindagi-english/images/2026/03/25/article/image/Main---2026-03-25T152222.881-1774432384580.webp", duration:"1:55", audio:"My_Favorite_Songs/Jaiye Sajana (Live at Dhurandhar The Revenge - Music Album Launch)｜ Shashwat Sachdev,Jasmine Sandlas.mp3" },
+    { id:39, title:"Hanuman Chalisa", artist:" GULSHAN KUMAR ｜ HARIHARAN", img:"https://amitray.com/wp-content/uploads/2025/11/Sri-Hanuman-Chalisa.jpg", duration:"9:41", audio:"My_Favorite_Songs/श्री हनुमान चालीसा 🌺🙏｜ Shree Hanuman Chalisa Original Video ｜🙏🌺｜ GULSHAN KUMAR ｜ HARIHARAN ｜ 8K.mp3" },
+    { id:40, title:"Sankat mochan", artist:"Ashtak,HARIHARAN", img:"https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQUrHUm2vNaU1kHXuP5cuGn4rvzNS1QxfxBJQ&s", duration:"6:14", audio:"My_Favorite_Songs/संकटमोचन हनुमान अष्टक, Sankat Mochan Hanuman Ashtak,HARIHARAN,Hindi, English Lyrics, Hanuman Chalisa.mp3" },
+    { id:41, title:"Headlights", artist:"Alok, Alan Walker", img:"https://bookingagentinfo.com/wp-content/uploads/2025/04/ab6761610000e5ebbf753c009fd9c2d53351dd3c.jpg", duration:"", audio:"My_Favorite_Songs/Alok, Alan Walker - Headlights (Lyrics) ft. KIDDO.mp3" },
+    { id:42, title:"Love Me Like You Do", artist:"Ellie Goulding", img:"https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcR4dw4IxbTIsJZ9pXDnnJvukjAeZfh6IL95SQ&s", duration:"", audio:"My_Favorite_Songs/Ellie Goulding - Love Me Like You Do (Fifty Shades Freed) (Official Video).mp3" },
+    { id:43, title:"Enna sona", artist:"A.R. Rahman, Arijit Singh", img:"https://i.ytimg.com/vi/IZF-rOe9u-g/maxresdefault.jpg", duration:"", audio:"My_Favorite_Songs/Enna Sona – Lyric Video ｜ Shraddha Kapoor ｜ Aditya Roy Kapur ｜ A.R. Rahman ｜ Arijit Singh.mp3" },
+    { id:44, title:"wishes", artist:"Hasan Raheem", img:"https://i1.sndcdn.com/artworks-YzKntaV1Gzr2Hy0V-JFa8AQ-t500x500.jpg", duration:"", audio:"My_Favorite_Songs/Hasan Raheem - Wishes ft Talwiinder ｜ Prod by Umair (Official Lyric Video).mp3" },
+    { id:45, title:"Hum Tere Pyar Mein", artist:"Lata Mangeshkar", img:"https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRHl3HxW0wAYNWiPH5cof7-G2r-IOnkL6XkzQ&s", duration:"", audio:"My_Favorite_Songs/Hum Tere Pyar Mein (4K) ｜ Lata Mangeshkar Romantic Song ｜ Dil Ek Mandir ｜ Raj Kumar, Meena Kumari.mp3" },
+    { id:46, title:"Indila", artist:"Indila", img:"https://c.saavncdn.com/709/Mini-World-French-2014-20260328015942-500x500.jpg", duration:"", audio:"My_Favorite_Songs/Indila - Tourner Dans Le Vide (Official Music Video).mp3" },
+    { id:47, title:"Ishqa Ve", artist:"Zeeshan Ali", img:"https://a10.gaanacdn.com/gn_img/albums/Rz4W8evbxD/4W8LZXq0Wx/size_m_1754993011.jpg", duration:"", audio:"My_Favorite_Songs/Ishqa Ve - Zeeshan Ali ｜ Yuvraj Tung ｜ Seerat Mast ｜ Sandeep Aulakh ｜ Latest Punjabi Songs 2025.mp3" },
+    { id:48, title:"Jaan Se Guzarte Hain", artist:" Shashwat Sachdev,Khan Saab", img:"https://i.ytimg.com/vi/TkZ8HUOxwSM/hq720.jpg?sqp=-oaymwEhCK4FEIIDSFryq4qpAxMIARUAAAAAGAElAADIQj0AgKJD&rs=AOn4CLDLIv_J-WYrqzKcPhApZ6UfxhcKuA", duration:"", audio:"My_Favorite_Songs/JAAN SE GUZARTE HAIN (Full Video)｜ Dhurandhar The Revenge｜ Ranveer Singh｜ Shashwat Sachdev,Khan Saab.mp3" },
+    { id:49, title:"Love your voice", artist:"JONY", img:"https://i1.sndcdn.com/artworks-ER5YAyztl5FdiPhk-LABajw-t500x500.jpg", duration:"", audio:"My_Favorite_Songs/JONY - Love your voice.mp3" },
+    { id:50, title:"Lady Gaga", artist:"Lady Gaga", img:"https://upload.wikimedia.org/wikipedia/commons/thumb/9/98/Lady_Gaga_at_the_White_House_in_2023_%281%29.jpg/330px-Lady_Gaga_at_the_White_House_in_2023_%281%29.jpg", duration:"", audio:"My_Favorite_Songs/Lady Gaga - Bloody Mary.mp3" },
+    { id:51, title:"Barbaad", artist:"The Rish", img:"https://a10.gaanacdn.com/gn_img/albums/qa4WEkqKP1/4WEyZzagWP/size_m_1749539042.jpg", duration:"", audio:"My_Favorite_Songs/Barbaad.mp3" },
+    { id:52, title:"Navjot Ahuja - Khat", artist:"Navjot Ahuja", img:"https://images.genius.com/6178f2bf00e0b6aeb4925160c2756dde.300x300x1.png", duration:"", audio:"My_Favorite_Songs/Navjot Ahuja - Khat (Official Audio).mp3" },
+    { id:53, title:"Paar chanaa de", artist:"Coke Studio", img:"https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcS2fK35YuPTE6e5RnAXZbnhYIw4ZL2x8SkJ2A&s", duration:"", audio:"My_Favorite_Songs/Paar chanaa de - music video ｜ ALI WASI KAZMI ｜ AMNA YOUZASAIF ｜ FAN VIDEO.mp3" },
+    { id:54, title:"Saiyaara Title Song", artist:"Faheem Abdullah", img:"https://c.ndtvimg.com/2025-07/9ln27jac_saiyaara_625x300_27_July_25.jpg?im=FeatureCrop,algorithm=dnn,width=1200,height=738", duration:"", audio:"My_Favorite_Songs/Saiyaara Title Song ｜ Ahaan Panday, Aneet Padda ｜ Tanishk Bagchi, Faheem A, Arslan N ｜ Irshad Kamil.mp3" },
+    { id:55, title:"Sajde Official Music video", artist:"Faheem Abdullah I Huzaif Nazar ", img:"https://images.genius.com/4470a507dcf0b179b24779d43a86005c.1000x1000x1.jpg", duration:"", audio:"My_Favorite_Songs/Sajde Official Music video I Faheem Abdullah I Huzaif Nazar I Lost; Found Album I Artiste First.mp3" },
+    { id:56, title:"Same Beef Song", artist:"siddhu moosewala", img:"https://i.ytimg.com/vi/qk2WMmiiVFE/maxresdefault.jpg", duration:"", audio:"My_Favorite_Songs/Same Beef Song ｜ BOHEMIA ｜ Ft. Sidhu Moose Wala ｜ Byg Byrd ｜ Punjabi Song ｜ Rap Song ｜ Music Video.mp3" },
+    { id:57, title:"Sitaare", artist:"Agastya Nanda, Simar Bhatia, Dharmendra Deol, Jaideep A", img:"https://images.genius.com/21704a6e7d7de5d2e7f8f904d5dfdbd0.1000x1000x1.png", duration:"", audio:"My_Favorite_Songs/Sitaare ｜ Ikkis ｜ Agastya Nanda, Simar Bhatia, Dharmendra Deol, Jaideep A ｜ Arijit Singh, Amitabh B.mp3" },
+    { id:58, title:"Tagde Karam", artist:"sumit parta", img:"https://i.ytimg.com/vi/eutah9YCDhM/maxresdefault.jpg", duration:"", audio:"My_Favorite_Songs/Sumit Parta ＂Tagde Karam＂ (Official Music Video) ｜ New Haryanvi Song 2025 ｜ T-Series Haryanvi.mp3" },
+    { id:59, title:"Tu Jaane Na", artist:"Atif aslam", img:"https://c.saavncdn.com/792/Ajab-Prem-Ki-Ghazab-Kahani-Hindi-2009-20260123163407-500x500.jpg", duration:"", audio:"My_Favorite_Songs/Tu Jaane Na.mp3" },
+    { id:60, title:"Acharuli ", artist:"unknown", img:"https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTvVczVsJ8oA4ap20V274oPDq4qzevENRYGsQ&s", duration:"", audio:"My_Favorite_Songs/Ачарули.mp3" },
+    { id:61, title:"Matushka", artist:"Татьяна Куртукова", img:"https://i.ytimg.com/vi/ouv1lG3t-B0/hq720.jpg?sqp=-oaymwEhCK4FEIIDSFryq4qpAxMIARUAAAAAGAElAADIQj0AgKJD&rs=AOn4CLBnu2kY23i-ZPhgtGB-LljaAj_UAA", duration:"", audio:"My_Favorite_Songs/Татьяна Куртукова - Матушка.mp3" },
+    { id:62, title:"Alone", artist:"Alan Walker", img:"https://bookingagentinfo.com/wp-content/uploads/2025/04/ab6761610000e5ebbf753c009fd9c2d53351dd3c.jpg", duration:"2:43", audio:"My_Favorite_Songs/Alan Walker - Alone.mp3" },
+    { id:63, title:"4 AADMI", artist:"Sumit Parta ｜ Mr.Maxxx", img:"https://in.bmscdn.com/artist/sumit-parta-2030980-1695447424.jpg", duration:"2:24", audio:"My_Favorite_Songs/4 AADMI (Official Music Video) ｜ Sumit Parta ｜ Mr.Maxxx ｜ Haryanvi Song 2025.mp3" },
+    { id:64, title:"I'm done", artist:"maan pannu", img:"https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSSiFr891mchDmYkikivIvhxwK2f6zK3U6VvA&s", duration:"2:40", audio:"My_Favorite_Songs/I am Done - Maan Panu .mp3" },
+    { id:65, title:"Karma", artist:"Rishab Shetty | Rukmini", img:"https://i.ytimg.com/vi/gH_RYRwVrVM/maxresdefault.jpg", duration:"4:10", audio:"My_Favorite_Songs/Karma Video Song (Hindi) - Kantara Chapter 1 ｜ Rishab Shetty, Rukmini ｜ Hombale Films.mp3" },
+    { id:66, title:"Aaiye na Hamre Bihar mein", artist:"Khakee|BiharChapter", img:"https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQlEwT8NOR_CCxkIMLeAkMcwpN-AGZ-8f72Wg&s", duration:"3:10", audio:"My_Favorite_Songs/Ayee Na Humara Bihar Main - Soundtrack from Khakee ： The Bihar Chapter.mp3" },
+    { id:67, title:"Aasman Rootha", artist:"Panchayat ", img:"https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRUJ4hMKV3CqK3GusuXEhupqTTmusBjDwg8UQ&s", duration:"3:27", audio:"My_Favorite_Songs/Aasman Rootha.mp3" },
+    { id:68, title:"Paro", artist:"AdityaRikhari", img:"https://c.saavncdn.com/334/Paro-Hindi-2024-20241022023713-500x500.jpg", duration:"", audio:"My_Favorite_Songs/Aditya Rikhari - Paaro (Official Video).mp3" },
+    { id:69, title:"Pal Pal", artist:"Talwinder", img:"https://images.genius.com/7d3e52ed26249acdce52b2aebfff52f6.1000x1000x1.png", duration:"2:27", audio:"My_Favorite_Songs/Afusic - Pal Pal (Official Music Video) Prod. @AliSoomroMusic.mp3" },
+    { id:70, title:"Aigiri Nandini", artist:"Rajalakhsmi Sanjay", img:"https://sampurnchalisa.com/wp-content/uploads/2024/08/aigiri-nandini-1024x576.jpg", duration:"", audio:"My_Favorite_Songs/Aigiri Nandini With Lyrics ｜ Mahishasura Mardini Stotram For Spiritual Growth ｜ Rajalakshmee Sanjay.mp3" },
+    { id:71, title:"Azadi", artist:"Divine", img:"https://i.ytimg.com/vi/4nCshJBODT4/maxresdefault.jpg", duration:"", audio:"My_Favorite_Songs/Azadi.mp3" },
+    { id:72, title:"Tension", artist:"Dhanda Nyoliwala", img:"https://i.ytimg.com/vi/TtYiRck91UA/hq720.jpg?sqp=-oaymwEhCK4FEIIDSFryq4qpAxMIARUAAAAAGAElAADIQj0AgKJD&rs=AOn4CLDUr_KUql9VFrjNhu4U8f2sS3zaMg", duration:"", audio:"My_Favorite_Songs/Dhanda Nyoliwala - Tension (Official Music Video).mp3" },
+    { id:73, title:"Dil Tu Jaan Tu", artist:"Gurnazar", img:"https://c.saavncdn.com/912/Dil-Tu-Jaan-Tu-Hindi-2024-20240607164640-500x500.jpg", duration:"", audio:"My_Favorite_Songs/Dil Tu Jaan Tu (Full Video) Gurnazar Ft. Kritika Yadav ｜ New Punjabi Viral Song ｜ Chet Singh.mp3" },
+    { id:74, title:"Haseen", artist:"Talwindar", img:"https://c.saavncdn.com/065/Haseen-Punjabi-2025-20250217081851-500x500.jpg", duration:"", audio:"My_Favorite_Songs/HASEEN - TALWIINDER, NDS, RIPPY (Official Visualizer).mp3" },
+    { id:75, title:"Hind Ke Sitara", artist:"panchayat", img:"https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRUJ4hMKV3CqK3GusuXEhupqTTmusBjDwg8UQ&s", duration:"", audio:"My_Favorite_Songs/Hind Ke Sitara ｜ Official Music Video ｜ Panchayat S3 ｜ Manoj Tiwari, Gayatri Thakur Vyas, Anurag S.mp3" },
+    { id:76, title:"Jhula Jhulaye", artist:"Atif Aslam", img:"https://sundayguardianlive.com/wp-content/uploads/2026/02/untitled-design-9.jpg", duration:"", audio:"My_Favorite_Songs/Jhula Jhulaye - Video Song ｜ Yeh Hai Meri Kahani ｜ Atif Aslam ｜ Album ＂Meri Kahani＂.mp3" },
+    { id:77, title:"Jiya Tu", artist:"Gangs of waseypur", img:"https://c.saavncdn.com/426/Gangs-Of-Wasseypur-Hindi-2012-20221212051137-500x500.jpg", duration:"", audio:"My_Favorite_Songs/Jiya Tu.mp3" },
+    { id:78, title:"Kaari Kaari", artist:"", img:"https://i.ytimg.com/vi/fFdyUJcqMQQ/maxresdefault.jpg", duration:"", audio:"My_Favorite_Songs/Kaari Kaari - PINK Movie ｜ Lyrical Video ｜ Qurat Ul Ain Balouch ｜ Amitabh Bachchan ｜ Taapsee Pannu.mp3" },
+    { id:79, title:"Kachha Ghada", artist:"Rahgeer", img:"https://i1.sndcdn.com/artworks-KeZWJ2fzEyy4DCre-ppNYRQ-t500x500.jpg", duration:"", audio:"My_Favorite_Songs/Kachha Ghada.mp3" },
+    { id:80, title:"Kanha Thumri", artist:"salman khan", img:"https://lyricsraag.com/wp-content/uploads/2026/02/kanha-thumri-veer-translation.webp", duration:"", audio:"My_Favorite_Songs/Kanha - Thumri.mp3" },
+    { id:81, title:"Lambi Lambi Chori", artist:"Unknown", img:"https://improxy.starmakerstudios.com/tools/im/360x/production/cover_img/c7c977201dde241df2d9c7d06cdc07bc", duration:"", audio:"My_Favorite_Songs/Lambi Lambi Chhori _ Pardeep Boora _ Pooja Hooda _ Ashoka Deswal _ Parul Khatri _ Haryanvi Song.mp3" },
+    { id:82, title:"Yeh kaisi duvidha hai", artist:"Mahabharat", img:"https://d3e6ckxkrs5ntg.cloudfront.net/artists/images/4392246/original/resize:600x767/crop:x0y5w262h196/aspect:1.0/hash:1467583342/1410634479_artist_4392246-1410634452.jpg?1467583342", duration:"", audio:"My_Favorite_Songs/Yeh Kaisi Duvidha Haii .... यह कैसी दुविधा है ｜ Mahabharat Song ｜ ek maa ki do santane.mp3" },
+    { id:83, title:"Maharani", artist:"Arpit bala", img:"https://c.saavncdn.com/033/Qabool-Hai-Deluxe--Hindi-2022-20220401131455-500x500.jpg", duration:"", audio:"My_Favorite_Songs/Maharani - Karun, Lambo Drive, Arpit Bala & Revo Lekhak (Official Music Video) ｜ Qabool Hai.mp3" },
+    { id:84, title:"Tu hai Kahan", artist:"Aur", img:"https://harmonicsurvey.com/wp-content/uploads/2024/11/Tu-Hai-Kahan-Song-Lyrics-Raffey-Anwar-AUR.jpg", duration:"", audio:"My_Favorite_Songs/Tu Hai Kahan by AUR ｜ تو ہے کہاں (Official Music Video).mp3" },
+    { id:85, title:"Zaroor", artist:"Apaarshakti khurana", img:"https://c.saavncdn.com/522/Zaroor-Punjabi-2024-20240528201611-500x500.jpg", duration:"", audio:"My_Favorite_Songs/Zaroor.mp3" },
+    { id:86, title:"Veer hanumana", artist:"unknown", img:"https://i.pinimg.com/736x/f7/29/c5/f729c5e3104e342bb483f7effbe78bf3.jpg", duration:"", audio:"https://cdn.jsdelivr.net/gh/Ant-Man09/Favsongs@main/songs/VeerHanumanaAtiBalwanaBhajan.mp3" },
+    { id:87, title:"Om Jai Jagdish Hare", artist:"unknown", img:"https://i.pinimg.com/736x/f7/29/c5/f729c5e3104e342bb483f7effbe78bf3.jpg", duration:"", audio:"My_Favorite_Songs/Om Jai Jagdish Hare.mp3" },
+    { id:88, title:"Yada Yada ", artist:"geeta", img:"https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcR5JrPSdeI_5AkXD3JwIT0MFBjXfgux9fVBAQ&s", duration:"", audio:"My_Favorite_Songs/Yada yada hi dharmasya.mp3" },
+    { id:89, title:"Sukh Karta Dukh Karta", artist:"Unknown", img:"https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTdWQfRSbl4Nf7XncYaWQNAMJG1kKGsS7f4sw&s", duration:"", audio:"My_Favorite_Songs/Sukh Karta Dukh Harta ｜＂Ganpati Aarti ｜ Sukhkarta Dukhharta Full ｜ Ganesh Aarti ｜ सुखकर्ता दुःखहर्ता.mp3" },
+    { id:90, title:"Tandav Strotam", artist:"Unknown", img:"https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcT_aTk3SUt1tIsTCnr6ycsKLEYjx_IeipjujA&s", duration:"", audio:"My_Favorite_Songs/Shiv Tandav Stotram ｜ By Varsha Dwivedi   शिव तांडव Stotram Tandav.mp3" },
+    { id:91, title:"Shree Hari Strotam", artist:"Unknown", img:"https://i.pinimg.com/736x/f7/29/c5/f729c5e3104e342bb483f7effbe78bf3.jpg", duration:"", audio:"My_Favorite_Songs/Shree Hari Stotram.mp3" },
+    { id:92, title:"Tujhse Naraaz Nahi", artist:"Lata Mangeshkar", img:"https://c.saavncdn.com/305/Tujhse-Naraz-Nahi-Zindagi-Stripped-Down-Version-Hindi-2024-20240807093814-500x500.jpg", duration:"", audio:"My_Favorite_Songs/Tujhse Naraz Nahi Zindagi.mp3" },
+    { id:93, title:"Zindagi Ke Safar Mein", artist:"Unknown", img:"https://i.ytimg.com/vi/Se7JIGF1RMg/sddefault.jpg", duration:"", audio:"My_Favorite_Songs/Zindagi Ke Safar Mein ｜ Amruta Kolatkar ｜ Kishore Kumar ｜ Aap Ki Kasam.mp3" },
+    { id:94, title:"Yeh Zivan Hain", artist:"Unknown", img:"https://i.ytimg.com/vi/0YPXA1Oa6X4/sddefault.jpg", duration:"", audio:"My_Favorite_Songs/Yeh Jeevan Hai Is Jeevan Ka - Lyrical ｜ Piya Ka Ghar ｜ Anil Dhawan & Jaya Bhaduri ｜ Kishore Kumar.mp3" },
+    { id:95, title:"Main Pal Do Pal", artist:"Kishore kumar", img:"https://a10.gaanacdn.com/gn_img/albums/VdNW0JMKo5/dNW09gwMbo/size_m.webp", duration:"", audio:"My_Favorite_Songs/Main Pal Do Pal Ka Shayar Hoon ｜ Amitabh Bachchan's Poetry Recital  ｜ Kabhi Kabhie [1976].mp3" },
+    { id:96, title:"Ruk Jana Nahin", artist:"Kishore kumar", img:"https://i.ytimg.com/vi/6J9okctVu58/maxresdefault.jpg", duration:"", audio:"My_Favorite_Songs/Ruk Jana Nahin - (Lyrics) ｜ Kishore Kumar ｜ Imtihan ｜ Vinod Khanna ｜ Old Hindi Sad Song.mp3" },
+    { id:97, title:"Prasanna Vadanam", artist:"Unknown", img:"https://i.pinimg.com/736x/f7/29/c5/f729c5e3104e342bb483f7effbe78bf3.jpg", duration:"", audio:"My_Favorite_Songs/Prasanna Vadanam Shloka.mp3" },
+    { id:98, title:"Lag Ja Gale", artist:"Lata Mangeshkar", img:"https://i.ytimg.com/vi/DFbbpMD3taw/maxresdefault.jpg", duration:"", audio:"My_Favorite_Songs/Lag Ja Gale Se Phir ｜  Lata Mangeshkar Hits ｜ Woh Kaun Thi？ (1964).mp3" },
+    { id:99, title:"Ramti aave madi ", artist:"Unknown", img:"https://i.ytimg.com/vi/VOaUw3CjOJI/maxresdefault.jpg", duration:"", audio:"My_Favorite_Songs/Ramti aave madi.mp3" },
+    { id:100, title:"Vida Karo", artist:"arijit singh", img:"https://i.ytimg.com/vi/C-usx9Ka5Fc/maxresdefault.jpg", duration:"", audio:"My_Favorite_Songs/Vida Karo.mp3" },
+    { id:101, title:"Wat Wat", artist:"arijit singh", img:"https://img.etimg.com/thumb/width-1200,height-1200,imgsize-39738,resizemode-75,msid-128918560/magazines/panache/after-retirement-why-is-arijit-singh-living-as-shomu-in-jiaganj-the-answer-lies-in-a-hidden-truth-far-from-mumbais-fame-game.jpg", duration:"", audio:"My_Favorite_Songs/Wat wat wat song.mp3" },
+    { id:102, title:"Music", artist:"Unknown", img:"https://upload.wikimedia.org/wikipedia/commons/thumb/7/7b/The_Sounds_of_Earth_-_GPN-2000-001976.jpg/330px-The_Sounds_of_Earth_-_GPN-2000-001976.jpg", duration:"", audio:"My_Favorite_Songs/audiomass-output.mp3" },
+    { id:103,  title:"Nani teri morni ",artist:"unknown",img:"https://a10.gaanacdn.com/gn_img/albums/VdNW0JMKo5/dNW0zEMKo5/size_m.jpg",duration:"",audio:"My_Favorite_Songs/Nani teri morni ko mor le gaye.mp3"},
+    { id:104,  title:"Afsos ",artist:"Anuv Jain",img:"https://i.ytimg.com/vi/2FhgKp_lfJQ/maxresdefault.jpg",duration:"",audio:"https://cdn.jsdelivr.net/gh/Ant-Man09/Favsongs@main/songs/AFSOS.mp3"},
+    { id:105,  title:"Boyfriend ",artist:"Karan Aujla",img:"https://images.genius.com/fdc4682999a762f4e6d0049521b368b3.1000x1000x1.png",duration:"",audio:"https://cdn.jsdelivr.net/gh/Ant-Man09/Favsongs@main/songs/BOYFRIEND.mp3"},
+    { id:106,  title:"Bismil ",artist:"Haider",img:"https://i.ytimg.com/vi/p6ZxI5_A69M/hq720.jpg?sqp=-oaymwEhCK4FEIIDSFryq4qpAxMIARUAAAAAGAElAADIQj0AgKJD&rs=AOn4CLDkvxug3zAMcAtUdx1PLxyKmLpQNQ",duration:"",audio:"https://cdn.jsdelivr.net/gh/Ant-Man09/Favsongs@main/songs/Bismil.mp3"},
+    { id:107,  title:"Deh Shiva ",artist:"Jasleen",img:"https://i.ytimg.com/vi/nVl_DFjY6H8/mqdefault.jpg",duration:"",audio:"https://cdn.jsdelivr.net/gh/Ant-Man09/Favsongs@main/songs/DehShiva.mp3"},
+    { id:108,  title:"For A Reason ",artist:"Karan Aujla",img:"https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTdBQTLgcZwVkhyTvfCs-GzRL5nSE_tdO1nzg&s",duration:"",audio:"https://cdn.jsdelivr.net/gh/Ant-Man09/Favsongs@main/songs/ForAReason.mp3"},
+    { id:109,  title:"Lalkaara ",artist:"Diljit Djosanth",img:"https://images.genius.com/3918f1971dc7e0fed9c2f12917f5f18e.1000x1000x1.png",duration:"",audio:"https://cdn.jsdelivr.net/gh/Ant-Man09/Favsongs@main/songs/Lalkaara.mp3"},
+    { id:110,  title:"Softly ",artist:"Karan Aujla",img:"https://i.ytimg.com/vi/cWMxCE2HTag/maxresdefault.jpg",duration:"",duration:"",audio:"https://cdn.jsdelivr.net/gh/Ant-Man09/Favsongs@main/songs/SOFTLY.mp3"},
+    { id:111,  title:"Thee THalapathy ",artist:"Thalapathy",img:"https://i.scdn.co/image/ab67706f0000000268c14b58d29eca5f163b5c7e",duration:"",audio:"https://cdn.jsdelivr.net/gh/Ant-Man09/Favsongs@main/songs/TheeThalapathy.mp3"},
+    { id:112,  title:"Wow ",artist:"Karan Aujla",img:"https://i.ytimg.com/vi/SzTmJklgIM8/hq720.jpg?sqp=-oaymwEhCK4FEIIDSFryq4qpAxMIARUAAAAAGAElAADIQj0AgKJD&rs=AOn4CLBzRO2jOByHsiAwrmiKb97OZnmlSA",duration:"",audio:"https://cdn.jsdelivr.net/gh/Ant-Man09/Favsongs@main/songs/Wow.mp3"},
+    { id:113,  title:"Alakh Niranjan ",artist:"Aadesh",img:"https://a10.gaanacdn.com/gn_img/albums/BZgWoQOK2d/gWomLEOvK2/size_m.jpg",duration:"",audio:"https://cdn.jsdelivr.net/gh/Ant-Man09/Favsongs@main/songs/AlakhNiranjan.mp3"},
+    { id:114,  title:"Tere Bin ",artist:"",img:"https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcT675gnjp-WYYOIo6cw15frV4Uk2pZGJ8cQv82lp-n-2T6CPYa0wHJSbzI&s=10",duration:"",audio:"https://cdn.jsdelivr.net/gh/Ant-Man09/Favsongs@main/songs/TereBin.mp3"},
+    { id:115,  title:"Tere Bina ",artist:"Ar Rehman,Chinmayi,Murtuza Khan,Qadir Khan",img:"https://c.saavncdn.com/020/Guru-Hindi-2006-20190516131307-500x500.jpg",duration:"",audio:"https://cdn.jsdelivr.net/gh/Ant-Man09/Favsongs@main/songs/TereBina.mp3"},
+  { id: 116, title: "295", artist: "Sidhu Moose Wala", img: "https://i.pinimg.com/736x/a3/4b/42/a34b428af474cbe4a45722bd7318f58e.jpg", duration: "", audio: "https://cdn.jsdelivr.net/gh/Ant-Man09/Favsongs@main/songs/295.mp3" },
+  { id: 117, title: "8 Parche", artist: "BaaniSandhu,GurSidhu", img: "https://i1.sndcdn.com/artworks-L8N75EbHXXl09mzC-GNpzDA-t500x500.jpg", duration: "", audio:"https://cdn.jsdelivr.net/gh/Ant-Man09/Favsongs@main/songs/8Parche.mp3" },
+  { id: 118, title: "9:45", artist: "Prabh Singh, Jay Trak", img: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSMt_nMg1QmVsraY7a48ubLt8RgNimJ-aZC-SWO7JKAiyM76nVjBctsPZaP&s=10", duration: "", audio: "https://cdn.jsdelivr.net/gh/Ant-Man09/Favsongs@main/songs/9_45.mp3" },
+  { id: 119, title: "Aam JaheMunde", artist: "ParmishVerma", img: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRVyqxJP0CUTs03BtJXVdt4Al7Xrz9NvcoeHh0Ui95QFWrX19dRlT6xEHLt&s=10", duration: "", audio: "https://cdn.jsdelivr.net/gh/Ant-Man09/Favsongs@main/songs/AamJaheMunde.mp3" },
+  { id: 120, title: "AANKH", artist: "", img: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcT22r1Xbgf3JTrWS-k1xPChII3dThchanHcnvfnQce1MyPq1-_X6eIGf7mD&s=10", duration: "", audio: "https://cdn.jsdelivr.net/gh/Ant-Man09/Favsongs@main/songs/AANKH.mp3" },
+  { id: 121, title: "AankhonMeinDoobJaneKo", artist: "TheLocalTrain", img: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcS0_UkcmKONAWDwwwNxKI7MtB3AAQ22jIzp-t_ghZ4Im4GK4FPcyKm7JHM&s=10", duration: "", audio:"https://cdn.jsdelivr.net/gh/Ant-Man09/Favsongs@main/songs/AankhonMeinDoobJaneKo.mp3" },
+  { id: 122, title: "Aankhon Se Batana", artist: "Dikshant", img: "https://i1.sndcdn.com/artworks-5CJdHwHIgSxkwgWg-XQK3Aw-t500x500.jpg", duration: "", audio: "https://cdn.jsdelivr.net/gh/Ant-Man09/Favsongs@main/songs/AankhonSeBatana.mp3" },
+  { id: 123, title: "Aao Kabhi Haveli Pe", artist: "Badshah, Nikhita Gandhi", img: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTw2pnjY1wCnvtuNU5ktSMKzpxK8wzHfcNyUBEIKMYjFoplFfM3Dv4Gt2E&s=10", duration: "", audio: "https://cdn.jsdelivr.net/gh/Ant-Man09/Favsongs@main/songs/AaoKabhiHaveliPe.mp3" },
+  { id: 124, title: "Abhi Na Jao Chod Kar", artist: "Mohammed Rafi, Asha Bhosle", img: "https://a10.gaanacdn.com/gn_img/albums/ZaP37OR3Dy/P374zXo9WD/size_m.jpg", duration: "", audio: "https://cdn.jsdelivr.net/gh/Ant-Man09/Favsongs@main/songs/AbhiNaJaoChodKar.mp3" },
+  { id: 125, title: "Achha Sila Diya", artist: "B Praak", img: "https://i1.sndcdn.com/artworks-qLQh2lZkKrzyYPC2-iv77iQ-t1080x1080.jpg", duration: "", audio: "https://cdn.jsdelivr.net/gh/Ant-Man09/Favsongs@main/songs/Achha Sila Diya.mp3" },
+  { id: 126, title: "Akh Lad Jaave", artist: "Badshah, Asees Kaur", img: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRO9rWRupnzFpWiO6OVM-YOR9gbIOdwbuT6w3zbaNWdJbcRtsGn9Xg_p_bx&s=10", duration: "", audio: "https://cdn.jsdelivr.net/gh/Ant-Man09/Favsongs@main/songs/AkhLadJaave.mp3" },
+  { id: 127, title: "Alag Aasmaan", artist: "Anuv Jain", img: "https://images.genius.com/50af4dfcb3a4295c34bfacd6c1fffe9f.1000x1000x1.jpg", duration: "", audio: "https://cdn.jsdelivr.net/gh/Ant-Man09/Favsongs@main/songs/ALAGAASMAAN.mp3" },
+  { id: 128, title: "Allah Duhai Hai", artist: "Amit Mishra, Jonita Gandhi", img: "https://a10.gaanacdn.com/gn_img/albums/XzVWRyL3dq/zVWR10MA3d/size_m_1713881672.jpg", duration: "", audio: "https://cdn.jsdelivr.net/gh/Ant-Man09/Favsongs@main/songs/AllahDuhaiHai.mp3" },
+  { id: 129, title: "Angreji Beat", artist: "Yo Yo Honey Singh, Gippy Grewal", img: "https://i.ytimg.com/vi/YEf_hnXBbyI/maxresdefault.jpg", duration: "", audio: "https://cdn.jsdelivr.net/gh/Ant-Man09/Favsongs@main/songs/AngrejiBeat.mp3" },
+  { id: 130, title: "Animal BGM", artist: "", img: "https://www.telugu360.com/wp-content/uploads/2023/11/Animal-Movie-Review-1.jpg", duration: "", audio: "https://cdn.jsdelivr.net/gh/Ant-Man09/Favsongs@main/songs/AnimalBgm.mp3" },
+  { id: 131, title: "Azeem-O-Shaan Shahenshah", artist: "Mohammed Aslam, Bonnie Chakraborty", img: "https://i.ytimg.com/vi/ends0-xKdQg/maxresdefault.jpg", duration: "", audio: "https://cdn.jsdelivr.net/gh/Ant-Man09/Favsongs@main/songs/Azeem-O-Shaan.mp3" },
+  { id: 132, title: "Baarishein", artist: "Anuv Jain", img: "https://i.ytimg.com/vi/TJcxtrBozuw/mqdefault.jpg", duration: "", audio: "https://cdn.jsdelivr.net/gh/Ant-Man09/Favsongs@main/songs/BAARISHEIN.mp3" },
+  { id: 133, title: "Bande", artist: "Vikram Vedha", img: "https://c.saavncdn.com/105/Bande-From-Vikram-Vedha-Hindi-2022-20220926081001-500x500.jpg", duration: "", audio: "https://cdn.jsdelivr.net/gh/Ant-Man09/Favsongs@main/songs/Bande.mp3" },
+  { id: 134, title: "Bandeya", artist: "Arijit Singh", img: "https://c.saavncdn.com/267/Bandeya-From-Dil-Juunglee--Hindi-2018-20180222044014-500x500.jpg", duration: "", audio: "https://cdn.jsdelivr.net/gh/Ant-Man09/Favsongs@main/songs/Bandeya.mp3" },
+  { id: 135, title: "BANNI", artist: "", img: "https://paintwaint.in/cdn/shop/files/MTXX_MH20250411_145649170.jpg?v=1744365265", duration: "", audio: "https://cdn.jsdelivr.net/gh/Ant-Man09/Favsongs@main/songs/BANNI.mp3" },
+  { id: 136, title: "Bebe Bapu", artist: "Harsh Likhari", img: "https://c.saavncdn.com/756/Bebe-Bapu-Punjabi-2024-20240510170455-500x500.jpg", duration: "", audio: "https://cdn.jsdelivr.net/gh/Ant-Man09/Favsongs@main/songs/BebeBapu.mp3" },
+  { id: 137, title: "Boom Shaka", artist: "", img: "https://c.saavncdn.com/307/Boom-Shaka-Hindi-2026-20260428064906-500x500.jpg", duration: "", audio: "https://cdn.jsdelivr.net/gh/Ant-Man09/Favsongs@main/songs/BoomShaka.mp3" },
+  { id: 138, title: "Buzz", artist: "Badshah, Aastha Gill", img: "https://i0.wp.com/urbanasian.com/wp-content/uploads/2018/03/DSC_9016-1.jpg?resize=640%2C643&ssl=1", duration: "", audio: "https://cdn.jsdelivr.net/gh/Ant-Man09/Favsongs@main/songs/Buzz.mp3" },
+  { id: 139, title: "Chaap Tilak", artist: "Abida Parveen, Rahat Fateh Ali Khan", img: "https://c.saavncdn.com/112/Chaap-Tilak-Hindi-2020-20201204053342-500x500.jpg", duration: "", audio: "https://cdn.jsdelivr.net/gh/Ant-Man09/Favsongs@main/songs/ChaapTilak.mp3" },
+  { id: 140, title: "Challa (Main Lad Jaana)", artist: "Romy, Vivek Hariharan", img: "https://i.ytimg.com/vi/g62J-8nV5FI/maxresdefault.jpg", duration: "", audio: "https://cdn.jsdelivr.net/gh/Ant-Man09/Favsongs@main/songs/Challa(MainLadJaana).mp3" },
+   { id: 141, title: "Cheater", artist: "", img: "https://images.macrumors.com/t/hi1_a2IdFGRGMsJ0x31SdD_IcRk=/1600x/article-new/2018/05/apple-music-note.jpg", duration: "", audio: "https://cdn.jsdelivr.net/gh/Ant-Man09/Favsongs@main/songs/Cheater.mp3" },
+  { id: 142, title: "Choo Lo", artist: "The Local Train", img: "https://images.macrumors.com/t/hi1_a2IdFGRGMsJ0x31SdD_IcRk=/1600x/article-new/2018/05/apple-music-note.jpg", duration: "", audio: "https://cdn.jsdelivr.net/gh/Ant-Man09/Favsongs@main/songs/ChooLo.mp3" },
+  { id: 143, title: "Choudhar Jaat Ki", artist: "Raju Punjabi", img: "https://images.macrumors.com/t/hi1_a2IdFGRGMsJ0x31SdD_IcRk=/1600x/article-new/2018/05/apple-music-note.jpg", duration: "", audio: "https://cdn.jsdelivr.net/gh/Ant-Man09/Favsongs@main/songs/ChoudharJaatKi.mp3" },
+  { id: 144, title: "Daler Mehndi Gurbani", artist: "Daler Mehndi", img: "https://images.macrumors.com/t/hi1_a2IdFGRGMsJ0x31SdD_IcRk=/1600x/article-new/2018/05/apple-music-note.jpg", duration: "", audio: "https://cdn.jsdelivr.net/gh/Ant-Man09/Favsongs@main/songs/DalerMehndi-Gurbani.mp3" },
+  { id: 145, title: "Deewaana Deewaana", artist: "", img: "", duration: "https://images.macrumors.com/t/hi1_a2IdFGRGMsJ0x31SdD_IcRk=/1600x/article-new/2018/05/apple-music-note.jpg", audio: "https://cdn.jsdelivr.net/gh/Ant-Man09/Favsongs@main/songs/DeewaanaDeewaana.mp3" },
+  { id: 146, title: "Dekha Hi Nahi", artist: "", img: "https://images.macrumors.com/t/hi1_a2IdFGRGMsJ0x31SdD_IcRk=/1600x/article-new/2018/05/apple-music-note.jpg", duration: "", audio: "https://cdn.jsdelivr.net/gh/Ant-Man09/Favsongs@main/songs/DekhaHiNahi.mp3" },
+  { id: 147, title: "Dekhha Tenu", artist: "Mohammad Faiz", img: "https://images.macrumors.com/t/hi1_a2IdFGRGMsJ0x31SdD_IcRk=/1600x/article-new/2018/05/apple-music-note.jpg", duration: "", audio: "https://cdn.jsdelivr.net/gh/Ant-Man09/Favsongs@main/songs/DekhhaTenu.mp3" },
+  { id: 148, title: "Dil Kyun Yeh Mera", artist: "KK", img: "https://images.macrumors.com/t/hi1_a2IdFGRGMsJ0x31SdD_IcRk=/1600x/article-new/2018/05/apple-music-note.jpg", duration: "", audio: "https://cdn.jsdelivr.net/gh/Ant-Man09/Favsongs@main/songs/DILKYUNYEHMERA.mp3" },
+  { id: 149, title: "DJ Waley Babu", artist: "Badshah, Aastha Gill", img: "https://images.macrumors.com/t/hi1_a2IdFGRGMsJ0x31SdD_IcRk=/1600x/article-new/2018/05/apple-music-note.jpg", duration: "", audio: "https://cdn.jsdelivr.net/gh/Ant-Man09/Favsongs@main/songs/DJWaleyBabu.mp3" },
+  { id: 150, title: "Ek Din Aap", artist: "Kumar Sanu, Alka Yagnik", img: "https://images.macrumors.com/t/hi1_a2IdFGRGMsJ0x31SdD_IcRk=/1600x/article-new/2018/05/apple-music-note.jpg", duration: "", audio: "https://cdn.jsdelivr.net/gh/Ant-Man09/Favsongs@main/songs/EkDinAap.mp3" },
+  { id: 151, title: "Farq Hai", artist: "Suzonn", img: "https://images.macrumors.com/t/hi1_a2IdFGRGMsJ0x31SdD_IcRk=/1600x/article-new/2018/05/apple-music-note.jpg", duration: "", audio: "https://cdn.jsdelivr.net/gh/Ant-Man09/Favsongs@main/songs/FarqHai.mp3" },
+  { id: 152, title: "Genda Phool", artist: "Badshah, Payal Dev", img: "https://images.macrumors.com/t/hi1_a2IdFGRGMsJ0x31SdD_IcRk=/1600x/article-new/2018/05/apple-music-note.jpg", duration: "", audio: "https://cdn.jsdelivr.net/gh/Ant-Man09/Favsongs@main/songs/GendaPhool.mp3" },
+  { id: 153, title: "Ghana Kasoota", artist: "Raftaar, Rashmeet Kaur", img: "https://images.macrumors.com/t/hi1_a2IdFGRGMsJ0x31SdD_IcRk=/1600x/article-new/2018/05/apple-music-note.jpg", duration: "", audio: "https://cdn.jsdelivr.net/gh/Ant-Man09/Favsongs@main/songs/GhanaKasoota.mp3" },
+  { id: 154, title: "Give Me Some Sunshine", artist: "Suraj Jagan, Sharman Joshi", img: "https://images.macrumors.com/t/hi1_a2IdFGRGMsJ0x31SdD_IcRk=/1600x/article-new/2018/05/apple-music-note.jpg", duration: "", audio: "https://cdn.jsdelivr.net/gh/Ant-Man09/Favsongs@main/songs/GiveMeSomeSunshine.mp3" },
+  { id: 155, title: "Gulaab", artist: "Mitraz", img: "https://images.macrumors.com/t/hi1_a2IdFGRGMsJ0x31SdD_IcRk=/1600x/article-new/2018/05/apple-music-note.jpg", duration: "", audio: "https://cdn.jsdelivr.net/gh/Ant-Man09/Favsongs@main/songs/Gulaab.mp3" },
+  { id: 156, title: "Hai Apna Dil To Aawara", artist: "Hemant Kumar", img: "https://images.macrumors.com/t/hi1_a2IdFGRGMsJ0x31SdD_IcRk=/1600x/article-new/2018/05/apple-music-note.jpg", duration: "", audio: "https://cdn.jsdelivr.net/gh/Ant-Man09/Favsongs@main/songs/HAIAPNADILTOAAWARA.mp3" },
+  { id: 157, title: "Hass Hass", artist: "Diljit Dosanjh, Sia", img: "https://images.macrumors.com/t/hi1_a2IdFGRGMsJ0x31SdD_IcRk=/1600x/article-new/2018/05/apple-music-note.jpg", duration: "", audio: "https://cdn.jsdelivr.net/gh/Ant-Man09/Favsongs@main/songs/HassHass.mp3" },
+  { id: 158, title: "Hasti Rahe Tu", artist: "Paradox", img: "https://images.macrumors.com/t/hi1_a2IdFGRGMsJ0x31SdD_IcRk=/1600x/article-new/2018/05/apple-music-note.jpg", duration: "", audio: "https://cdn.jsdelivr.net/gh/Ant-Man09/Favsongs@main/songs/HastiRaheTu.mp3" },
+  { id: 159, title: "HUSN", artist: "Anuv Jain", img: "https://images.macrumors.com/t/hi1_a2IdFGRGMsJ0x31SdD_IcRk=/1600x/article-new/2018/05/apple-music-note.jpg", duration: "", audio: "https://cdn.jsdelivr.net/gh/Ant-Man09/Favsongs@main/songs/HUSN.mp3" },
+  { id: 160, title: "I Guess", artist: "Kr$na", img: "https://images.macrumors.com/t/hi1_a2IdFGRGMsJ0x31SdD_IcRk=/1600x/article-new/2018/05/apple-music-note.jpg", duration: "", audio: "https://cdn.jsdelivr.net/gh/Ant-Man09/Favsongs@main/songs/IGuess.mp3" },
+  {
+  id: 161,
+  title: "Illuminati",
+  artist: "Sushin Shyam, Dabzee",
+  img: "https://images.macrumors.com/t/hi1_a2IdFGRGMsJ0x31SdD_IcRk=/1600x/article-new/2018/05/apple-music-note.jpg",
+  duration: "",
+  audio: "https://cdn.jsdelivr.net/gh/Ant-Man09/Favsongs@main/songs/Illuminati.mp3"
+},
+];
+
+// O(1) song lookup by id
+const songMap = new Map(songs.map(s => [s.id, s]));
+
+const weeklyIds     = [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,113];
+const favouritesIds  = [22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41];
+const newReleaseIds = [42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61];
+const newlyAddedIds = [62,63,64,65,66,67,68,69,70,71,72,73,74,75,76,77,78,79,80,81];
+const suggestedIds = [82,83,84,85,86,87,88,89,90,91,92,93,94,95,96,97,98,99,100,101,102,103,104,105,106,107,108,109,110,111,112];
+const trendingList  = [
+    { id:8,  rank:1, date:"2025", album:"Dhurandhar" },
+    { id:14, rank:2, date:"2023", album:"Jalwa" },
+    { id:36, rank:3, date:"2017", album:"Shape of You" },
+    { id:12, rank:4, date:"2025", album:"Gehra Hua" },
+    { id:25, rank:5, date:"2025", album:"Dhurandhar" },
+    { id:35, rank:6, date:"1978", album:"Nightflight to Venus" },
+    { id:33, rank:7, date:"2024", album:"Jigra" },
+];
+
+// ═══════════════════════════════════════
+//  STATE
+// ═══════════════════════════════════════
+let currentIndex = -1;
+let isPlaying    = false;
+let isShuffle    = false;
+let isLoop       = false;
+let isMuted      = false;
+let lastVolume   = 0.8;
+const liked      = new Set();
+
+// ═══════════════════════════════════════
+//  RENDER CARDS
+// ═══════════════════════════════════════
+function eqBarsHTML() {
+    return `<div class="eq-bar"></div><div class="eq-bar"></div><div class="eq-bar"></div>`;
+}
+
+function makeCard(song, index) {
+    const isEager = index < 8; // first 8 visible cards load eagerly
+    const div = document.createElement('div');
+    div.className = 'song-card';
+    div.dataset.id = song.id;
+    div.setAttribute('role', 'listitem');
+    div.setAttribute('tabindex', '0');
+    div.setAttribute('aria-label', `${song.title} by ${song.artist}`);
+    div.innerHTML = `
+        <div class="cover-wrap">
+            <img src="${song.img}" alt="${song.title} cover" loading="${isEager ? 'eager' : 'lazy'}">
+            <div class="play-overlay" aria-hidden="true">
+                <div class="play-circle"><i class="fas fa-play"></i></div>
+            </div>
+            <div class="card-playing-badge" aria-hidden="true">${eqBarsHTML()}</div>
+        </div>
+        <div class="info">
+            <div class="title">${song.title}</div>
+            <div class="artist">${song.artist}</div>
+        </div>`;
+    const play = () => playSongById(song.id);
+    div.addEventListener('click', play);
+    div.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); play(); } });
+    return div;
+}
+
+function makeRow(entry) {
+    const song = songMap.get(entry.id);
+    const tr   = document.createElement('tr');
+    tr.dataset.id = song.id;
+    tr.innerHTML = `
+        <td class="rank">
+            <span class="rank-num">#${entry.rank}</span>
+            <span class="rank-eq" aria-hidden="true">${eqBarsHTML()}</span>
+        </td>
+        <td>
+            <div class="song-info">
+                <img src="${song.img}" alt="${song.title} cover" loading="lazy">
+                <div>
+                    <div class="title">${song.title}</div>
+                    <div class="artist">${song.artist}</div>
+                </div>
+            </div>
+        </td>
+        <td>${entry.date}</td>
+        <td class="col-album-cell">${entry.album}</td>
+        <td>${song.duration}</td>
+        <td><button class="heart-btn" data-id="${song.id}" aria-label="Like ${song.title}"><i class="fas fa-heart" aria-hidden="true"></i></button></td>`;
+    tr.addEventListener('click', e => { if (!e.target.closest('.heart-btn')) playSongById(song.id); });
+    return tr;
+}
+
+let cardIndex = 0;
+document.getElementById('weekly-cards').append(    ...weeklyIds.map(id => makeCard(songMap.get(id), cardIndex++)));
+document.getElementById('favourites-cards').append(     // ← Add this
+    ...favouritesIds.map(id => makeCard(songMap.get(id), cardIndex++))
+);
+document.getElementById('newly-added-cards').append(     // ← Add this
+    ...newlyAddedIds.map(id => makeCard(songMap.get(id), cardIndex++))
+);
+document.getElementById('suggested-cards').append(     // ← Add this
+    ...suggestedIds.map(id => makeCard(songMap.get(id), cardIndex++))
+);
+document.getElementById('new-release-cards').append(...newReleaseIds.map(id => makeCard(songMap.get(id), cardIndex++)));
+document.getElementById('trending-body').append(    ...trendingList.map(makeRow));
+
+// ═══════════════════════════════════════
+//  PLAYER
+// ═══════════════════════════════════════
+const miniPlayer    = document.getElementById('mini-player');
+const playerImg     = document.getElementById('player-img');
+const playerThumb   = document.getElementById('player-thumb-idle');
+const playerTitle   = document.getElementById('player-title');
+const playerArtist  = document.getElementById('player-artist');
+const playerHeart   = document.getElementById('player-heart');
+const progressFill  = document.getElementById('progress-fill');
+const progressThumb = document.getElementById('progress-thumb');
+const progressBar   = document.getElementById('progress-bar');
+const currentTimeEl = document.getElementById('current-time');
+const totalTimeEl   = document.getElementById('total-time');
+const announcer     = document.getElementById('player-announce');
+
+const audio = new Audio();
+audio.volume = 0.8;
+audio.preload = 'none'; // don't buffer on page load
+
+function playSongById(id) {
+    const idx = songs.findIndex(s => s.id === id);
+    if (idx === -1) return;
+    currentIndex = idx;
+    loadSong();
+    startPlay();
+}
+
+function updateCardStates() {
+    const activeId = currentIndex >= 0 ? songs[currentIndex].id : -1;
+    document.querySelectorAll('.song-card').forEach(card => {
+        const isThis = parseInt(card.dataset.id) === activeId;
+        card.classList.toggle('playing', isThis && isPlaying);
+        card.classList.toggle('paused',  isThis && !isPlaying);
+        // swap play icon to pause on playing card overlay
+        const icon = card.querySelector('.play-circle i');
+        if (icon) icon.className = isThis && isPlaying ? 'fas fa-pause' : 'fas fa-play';
+    });
+}
+
+function loadSong() {
+    const s = songs[currentIndex];
+    audio.src = s.audio || '';
+    playerImg.src = s.img;
+    playerImg.alt = `${s.title} by ${s.artist}`;
+    playerImg.style.display = 'block';
+    playerThumb.style.display = 'none';
+    playerTitle.textContent  = s.title;
+    playerArtist.textContent = s.artist;
+    progressFill.style.width = '0%';
+    if (progressThumb) progressThumb.style.left = '0%';
+    currentTimeEl.textContent = '0:00';
+    totalTimeEl.textContent   = s.duration;
+    miniPlayer.classList.remove('idle');
+    playerHeart.classList.toggle('liked', liked.has(s.id));
+    playerHeart.setAttribute('aria-label', liked.has(s.id) ? `Unlike ${s.title}` : `Like ${s.title}`);
+    // Screen reader announcement
+    announcer.textContent = `Now playing: ${s.title} by ${s.artist}`;
+    // Trending row highlight
+    document.querySelectorAll('#trending-body tr').forEach(tr => {
+        tr.classList.toggle('playing', parseInt(tr.dataset.id) === s.id);
+        tr.classList.remove('paused');
+    });
+}
+
+function startPlay() {
+    isPlaying = true;
+    document.getElementById('play-pause-btn').innerHTML = '<i class="fas fa-pause" aria-hidden="true"></i>';
+    document.getElementById('play-pause-btn').setAttribute('aria-label', 'Pause');
+    audio.play().catch(() => {});
+    updateCardStates();
+    // Remove paused class from trending row
+    document.querySelectorAll('#trending-body tr.playing').forEach(r => r.classList.remove('paused'));
+}
+
+function stopPlay() {
+    isPlaying = false;
+    document.getElementById('play-pause-btn').innerHTML = '<i class="fas fa-play" aria-hidden="true"></i>';
+    document.getElementById('play-pause-btn').setAttribute('aria-label', 'Play');
+    audio.pause();
+    updateCardStates();
+    // Add paused class to trending row so eq bars freeze
+    document.querySelectorAll('#trending-body tr.playing').forEach(r => r.classList.add('paused'));
+}
+
+function togglePlay() {
+    if (currentIndex === -1) return;
+    if (!isPlaying) startPlay(); else stopPlay();
+}
+
+function playNext() {
+    if (currentIndex === -1) return;
+    stopPlay();
+    currentIndex = isShuffle ? Math.floor(Math.random() * songs.length) : (currentIndex + 1) % songs.length;
+    loadSong();
+    startPlay();
+}
+
+function playPrev() {
+    if (currentIndex === -1) return;
+    stopPlay();
+    if (audio.currentTime > 3) { audio.currentTime = 0; startPlay(); return; }
+    currentIndex = (currentIndex - 1 + songs.length) % songs.length;
+    loadSong();
+    startPlay();
+}
+
+audio.addEventListener('ended', () => {
+    if (isLoop) { audio.currentTime = 0; audio.play(); return; }
+    playNext();
+});
+
+// ── Progress: timeupdate ──
+audio.addEventListener('timeupdate', () => {
+    if (!audio.duration) return;
+    const pct = (audio.currentTime / audio.duration) * 100;
+    progressFill.style.width = pct + '%';
+    if (progressThumb) progressThumb.style.left = pct + '%';
+    progressBar.setAttribute('aria-valuenow', Math.round(pct));
+    const m = Math.floor(audio.currentTime / 60);
+    const s = Math.floor(audio.currentTime % 60);
+    currentTimeEl.textContent = `${m}:${s.toString().padStart(2,'0')}`;
+    const tm = Math.floor(audio.duration / 60);
+    const ts = Math.floor(audio.duration % 60);
+    totalTimeEl.textContent = `${tm}:${ts.toString().padStart(2,'0')}`;
+});
+
+// ── Progress bar: click + drag ──
+let isDragging = false;
+
+function seekTo(e) {
+    if (!audio.duration) return;
+    const rect = progressBar.getBoundingClientRect();
+    const x = Math.max(0, Math.min(e.clientX - rect.left, rect.width));
+    audio.currentTime = (x / rect.width) * audio.duration;
+}
+
+progressBar.addEventListener('mousedown', e => {
+    isDragging = true;
+    progressBar.classList.add('dragging');
+    seekTo(e);
+});
+document.addEventListener('mousemove', e => { if (isDragging) seekTo(e); });
+document.addEventListener('mouseup',   () => { if (isDragging) { isDragging = false; progressBar.classList.remove('dragging'); } });
+
+// Touch drag
+progressBar.addEventListener('touchstart', e => {
+    isDragging = true;
+    progressBar.classList.add('dragging');
+    seekTo(e.touches[0]);
+}, { passive: true });
+document.addEventListener('touchmove', e => { if (isDragging) seekTo(e.touches[0]); }, { passive: true });
+document.addEventListener('touchend',  () => { if (isDragging) { isDragging = false; progressBar.classList.remove('dragging'); } });
+
+// Keyboard seek on progress bar
+progressBar.addEventListener('keydown', e => {
+    if (!audio.duration) return;
+    if (e.key === 'ArrowRight') audio.currentTime = Math.min(audio.duration, audio.currentTime + 5);
+    if (e.key === 'ArrowLeft')  audio.currentTime = Math.max(0, audio.currentTime - 5);
+});
+
+// ═══════════════════════════════════════
+//  CONTROLS
+// ═══════════════════════════════════════
+document.getElementById('play-pause-btn').addEventListener('click', e => { e.stopPropagation(); togglePlay(); });
+document.getElementById('next-btn').addEventListener('click',       e => { e.stopPropagation(); playNext(); });
+document.getElementById('prev-btn').addEventListener('click',       e => { e.stopPropagation(); playPrev(); });
+
+document.getElementById('shuffle-btn').addEventListener('click', function(e) {
+    e.stopPropagation();
+    isShuffle = !isShuffle;
+    this.style.color = isShuffle ? 'var(--accent-pink)' : '';
+    this.setAttribute('aria-pressed', isShuffle);
+});
+
+document.getElementById('loop-btn').addEventListener('click', function(e) {
+    e.stopPropagation();
+    isLoop = !isLoop;
+    this.style.color = isLoop ? 'var(--accent-pink)' : '';
+    this.setAttribute('aria-pressed', isLoop);
+});
+
+// Volume slider
+document.getElementById('volume-slider').addEventListener('input', e => {
+    const v = e.target.value / 100;
+    audio.volume = v;
+    isMuted = v === 0;
+    lastVolume = v > 0 ? v : lastVolume;
+    updateVolIcon();
+});
+
+// Volume icon click = mute/unmute toggle
+document.getElementById('vol-icon').addEventListener('click', () => {
+    if (isMuted || audio.volume === 0) {
+        audio.volume = lastVolume || 0.8;
+        document.getElementById('volume-slider').value = (lastVolume || 0.8) * 100;
+        isMuted = false;
+    } else {
+        lastVolume = audio.volume;
+        audio.volume = 0;
+        document.getElementById('volume-slider').value = 0;
+        isMuted = true;
+    }
+    updateVolIcon();
+});
+
+function updateVolIcon() {
+    const icon = document.querySelector('#vol-icon i');
+    if (!icon) return;
+    if (audio.volume === 0 || isMuted) {
+        icon.className = 'fas fa-volume-mute';
+        document.getElementById('vol-icon').setAttribute('aria-label', 'Unmute');
+    } else if (audio.volume < 0.5) {
+        icon.className = 'fas fa-volume-down';
+        document.getElementById('vol-icon').setAttribute('aria-label', 'Mute');
+    } else {
+        icon.className = 'fas fa-volume-up';
+        document.getElementById('vol-icon').setAttribute('aria-label', 'Mute');
+    }
+}
+
+// ── Like / heart ──
+function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    clearTimeout(t._timer);
+    t._timer = setTimeout(() => t.classList.remove('show'), 2200);
+}
+
+playerHeart.addEventListener('click', () => {
+    if (currentIndex === -1) return;
+    const id = songs[currentIndex].id;
+    const wasLiked = liked.has(id);
+    if (wasLiked) { liked.delete(id); playerHeart.classList.remove('liked'); }
+    else           { liked.add(id);    playerHeart.classList.add('liked');    }
+    playerHeart.setAttribute('aria-label', !wasLiked ? `Unlike ${songs[currentIndex].title}` : `Like ${songs[currentIndex].title}`);
+    const th = document.querySelector(`#trending-body .heart-btn[data-id="${id}"]`);
+    if (th) th.classList.toggle('liked', liked.has(id));
+    showToast(wasLiked ? '💔 Removed from favourites' : '❤️ Added to favourites');
+});
+
+document.getElementById('trending-body').addEventListener('click', e => {
+    const btn = e.target.closest('.heart-btn');
+    if (!btn) return;
+    e.stopPropagation();
+    const id = parseInt(btn.dataset.id);
+    const wasLiked = liked.has(id);
+    if (wasLiked) { liked.delete(id); btn.classList.remove('liked'); }
+    else           { liked.add(id);    btn.classList.add('liked');    }
+    if (currentIndex !== -1 && songs[currentIndex]?.id === id) {
+        playerHeart.classList.toggle('liked', liked.has(id));
+        playerHeart.setAttribute('aria-label', !wasLiked ? `Unlike ${songs[currentIndex].title}` : `Like ${songs[currentIndex].title}`);
+    }
+    const s = songMap.get(id);
+    showToast(wasLiked ? '💔 Removed from favourites' : `❤️ ${s ? s.title : 'Song'} added to favourites`);
+});
+
+// ── Keyboard shortcuts ──
+document.addEventListener('keydown', e => {
+    // Don't fire when typing in search
+    if (e.target.tagName === 'INPUT') return;
+    if (e.key === ' ')           { e.preventDefault(); togglePlay(); }
+    if (e.key === 'ArrowRight' && !e.target.closest('.progress-bar')) {
+        if (audio.duration) audio.currentTime = Math.min(audio.duration, audio.currentTime + 5);
+    }
+    if (e.key === 'ArrowLeft' && !e.target.closest('.progress-bar')) {
+        if (audio.duration) audio.currentTime = Math.max(0, audio.currentTime - 5);
+    }
+    if (e.key === 'm' || e.key === 'M') document.getElementById('vol-icon').click();
+    if (e.key === 'n' || e.key === 'N') playNext();
+    if (e.key === 'p' || e.key === 'P') playPrev();
+});
+
+// ═══════════════════════════════════════
+//  SEARCH (functional live filter)
+// ═══════════════════════════════════════
+const searchInput   = document.getElementById('search-input');
+const searchResults = document.getElementById('search-results');
+const searchClear   = document.getElementById('search-clear');
+
+function renderSearchResults(query) {
+    const q = query.trim().toLowerCase();
+    searchResults.innerHTML = '';
+    if (!q) { searchResults.classList.remove('open'); return; }
+
+    const matches = songs.filter(s =>
+        s.title.toLowerCase().includes(q) || s.artist.toLowerCase().includes(q)
+    ).slice(0, 8);
+
+    if (!matches.length) {
+        searchResults.innerHTML = `<div class="search-no-results">No songs found for "${query}"</div>`;
+    } else {
+        matches.forEach(s => {
+            const item = document.createElement('div');
+            item.className = 'search-result-item';
+            item.setAttribute('role', 'option');
+            item.setAttribute('tabindex', '0');
+            item.innerHTML = `
+                <img src="${s.img}" alt="${s.title} cover" loading="lazy">
+                <div>
+                    <div class="sr-title">${highlight(s.title, q)}</div>
+                    <div class="sr-artist">${highlight(s.artist, q)}</div>
+                </div>`;
+            const go = () => {
+                playSongById(s.id);
+                searchInput.value = '';
+                searchResults.classList.remove('open');
+            };
+            item.addEventListener('click', go);
+            item.addEventListener('keydown', e => { if (e.key === 'Enter') go(); });
+            searchResults.appendChild(item);
+        });
+    }
+    searchResults.classList.add('open');
+}
+
+function highlight(text, q) {
+    const idx = text.toLowerCase().indexOf(q);
+    if (idx === -1) return text;
+    return text.slice(0, idx) +
+           `<mark style="background:rgba(255,0,204,0.3);color:white;border-radius:2px;">${text.slice(idx, idx + q.length)}</mark>` +
+           text.slice(idx + q.length);
+}
+
+searchInput.addEventListener('input',  e => renderSearchResults(e.target.value));
+searchInput.addEventListener('focus',  e => { if (e.target.value) renderSearchResults(e.target.value); });
+
+searchClear.addEventListener('click', () => {
+    searchInput.value = '';
+    searchResults.classList.remove('open');
+    searchInput.focus();
+});
+searchClear.addEventListener('keydown', e => { if (e.key === 'Enter') searchClear.click(); });
+
+// Close on outside click
+document.addEventListener('click', e => {
+    if (!e.target.closest('.search-box')) searchResults.classList.remove('open');
+});
+
+// ═══════════════════════════════════════
+//  SIDEBAR
+// ═══════════════════════════════════════
+const sidebar        = document.getElementById('sidebar');
+const sidebarOverlay = document.getElementById('sidebar-overlay');
+let sidebarOpen      = false;
+
+function isMobileView() { return window.innerWidth <= 900; }
+
+function openSidebar() {
+    sidebarOpen = true;
+    if (isMobileView()) {
+        sidebar.classList.add('open');
+        sidebarOverlay.classList.add('show');
+        document.body.style.gridTemplateColumns = '';
+    } else {
+        sidebar.style.width = '260px';
+        document.body.style.gridTemplateColumns = '260px 1fr';
+    }
+}
+
+function closeSidebar() {
+    sidebarOpen = false;
+    if (isMobileView()) {
+        sidebar.classList.remove('open');
+        sidebarOverlay.classList.remove('show');
+    } else {
+        sidebar.style.width = '0';
+        document.body.style.gridTemplateColumns = '0 1fr';
+    }
+}
+
+function initSidebar() {
+    if (isMobileView()) {
+        sidebar.style.width = '';
+        document.body.style.gridTemplateColumns = '';
+        sidebar.classList.remove('open');
+        sidebarOverlay.classList.remove('show');
+        sidebarOpen = false;
+    } else {
+        sidebar.classList.remove('open');
+        sidebarOverlay.classList.remove('show');
+        sidebar.style.width = '260px';
+        document.body.style.gridTemplateColumns = '260px 1fr';
+        sidebarOpen = true;
+    }
+}
+
+const hamburger = document.getElementById('hamburger');
+hamburger.addEventListener('click',   () => sidebarOpen ? closeSidebar() : openSidebar());
+hamburger.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); hamburger.click(); } });
+sidebarOverlay.addEventListener('click', closeSidebar);
+
+// Merged single loop for sidebar close + active highlight
+document.querySelectorAll('.menu-item').forEach(item => {
+    item.addEventListener('click', () => {
+        if (isMobileView() && sidebarOpen) closeSidebar();
+        document.querySelectorAll('.menu-item').forEach(i => i.classList.remove('active'));
+        item.classList.add('active');
+    });
+});
+
+let resizeTimer;
+window.addEventListener('resize', () => {
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(initSidebar, 80);
+});
+
+initSidebar();
+console.log('✅ Melodies v3 — all improvements applied.');
+</script>
+</body>
+</html>
